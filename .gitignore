@@ -1,1 +1,12 @@
 storage/*
+
+# Claude
+CLAUDE.md
+
+
+# 수정한 Dockerfile
+rtdetr.Dockerfile
+
+# pycache
+__pycache__/
+*/__pycache__/
