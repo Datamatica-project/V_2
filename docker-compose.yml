@@ -1,0 +1,172 @@
+version: "3.9"
+
+services:
+  yolov11:
+    build:
+      context: .
+      dockerfile: yolov11.Dockerfile
+    container_name: v2-yolov11
+    gpus: all
+    ports:
+      - "8020:8020"
+    volumes:
+      # ✅ 프로젝트 루트 전체 마운트 (api + src + configs + common 등 모두 접근)
+      - ./:/workspace
+      # ✅ weights/artifacts/datasets 고정 경로
+      - ./storage/weights/yolov11:/weights
+      - ./storage/artifacts/yolov11:/artifacts
+      - ./storage/datasets:/datasets:ro
+    environment:
+      MODEL_NAME: yolov11
+      PYTHONPATH: /workspace
+      WEIGHTS_ROOT: /weights
+      ARTIFACTS_DIR: /artifacts
+
+      # ✅ GPU 고정: yolov11 -> GPU 0
+      NVIDIA_VISIBLE_DEVICES: "0"
+      NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+    depends_on:
+      - minio
+    command: uvicorn api.yolov11.server:app --host 0.0.0.0 --port 8020 --reload
+
+  rtdetr:
+    build:
+      context: .
+      dockerfile: rtdetr.Dockerfile
+    container_name: v2-rtdetr
+    gpus: all
+    ports:
+      - "8021:8021"
+    volumes:
+      - ./:/workspace
+      - ./storage/weights/rtdetr:/weights
+      - ./storage/artifacts/rtdetr:/artifacts
+      - ./storage/datasets:/datasets:ro
+    environment:
+      MODEL_NAME: rtdetr
+      PYTHONPATH: /workspace
+      WEIGHTS_ROOT: /weights
+      ARTIFACTS_DIR: /artifacts
+      NVIDIA_VISIBLE_DEVICES: "1"
+      NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+    depends_on:
+      - minio
+    command: uvicorn api.rtdetr.server:app --host 0.0.0.0 --port 8021 --reload
+
+  rtm:
+    build:
+      context: .
+      dockerfile: rtm.Dockerfile
+    container_name: v2-rtm
+    gpus: all
+    ports:
+      - "8022:8022"
+    volumes:
+      - ./:/workspace
+      - ./storage/weights/rtm:/weights
+      - ./storage/artifacts/rtm:/artifacts
+      - ./storage/datasets:/datasets:ro
+    environment:
+      MODEL_NAME: rtm
+      PYTHONPATH: /workspace
+      WEIGHTS_ROOT: /weights
+      ARTIFACTS_DIR: /artifacts
+      RTM_CONFIG: /workspace/api/rtm_configs/rtmdet_config.py
+      NVIDIA_VISIBLE_DEVICES: "2"
+      NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+    depends_on:
+      - minio
+    command: uvicorn api.rtm.server:app --host 0.0.0.0 --port 8022 --reload
+
+  judge:
+    build:
+      context: .
+      dockerfile: judge.Dockerfile
+    container_name: v2-judge
+    ports:
+      - "8025:8025"
+    volumes:
+      - ./:/workspace
+      - ./script:/script:ro
+      - ./logs:/logs
+      - ./configs:/configs:ro
+      - ./storage/artifacts/judge:/artifacts
+      # (선택) judge가 datasets 직접 읽어야 하면 유지
+      - ./storage/datasets:/datasets:ro
+    environment:
+      PYTHONPATH: /workspace
+      PROJECT_ROOT: /workspace
+      CONFIGS_DIR: /configs
+      RUN_GT_TRAIN_SCRIPT: /script/tools/run_gt_train.py
+      PYTHON_BIN: python
+
+      YOLOV11_URL: http://yolov11:8020/infer
+      RTDETR_URL: http://rtdetr:8021/infer
+      RTM_URL: http://rtm:8022/infer
+
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      ARTIFACTS_DIR: /artifacts
+    depends_on:
+      - yolov11
+      - rtdetr
+      - rtm
+      - minio
+      - mlflow
+    command: uvicorn api.judge.server:app --host 0.0.0.0 --port 8025 --reload
+
+  minio:
+    image: minio/minio:latest
+    container_name: v2-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./storage/minio:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: v2-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./storage/mlflow:/mlflow
+    environment:
+      MLFLOW_BACKEND_STORE_URI: sqlite:////mlflow/mlflow.db
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://v2-artifacts
+
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin
+      AWS_DEFAULT_REGION: us-east-1
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+    depends_on:
+      - minio
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --default-artifact-root s3://v2-artifacts

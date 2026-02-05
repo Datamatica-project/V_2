@@ -1,0 +1,2 @@
+{"ts": "2026-01-27 17:15:43", "stage": "start", "out_dir": "/mnt/c/Users/pc/V_1/auto_labeling/V_2/_test_runs/http_e2e"}
+{"ts": "2026-01-27 17:15:44", "stage": "gateway_call_start", "candidates": ["/infer", "/bundle", "/infer/bundle", "/gateway/infer", "/api/infer"]}

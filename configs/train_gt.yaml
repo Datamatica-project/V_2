@@ -1,0 +1,53 @@
+# configs/train_gt.yaml
+job:
+  id_prefix: "job"
+  registry_dir: "./logs/train"
+  artifacts_root: "./storage/artifacts"
+
+data:
+  source_type: "GT"
+  mode: "local"
+  s3:
+    bucket: "v2-datasets"
+    prefix: "GT/current"
+  local:
+    root: "/workspace/storage/GT"   # ✅ run_gt_train.py가 읽는 키
+    images_subdir: "images"
+    labels_subdir: "labels"
+  splits:
+    train: "train"
+    val: "val"
+
+train:
+  epochs: 10
+  imgsz: 640
+  batch: 16
+  lr: 0.001
+  weight_decay: 0.0005
+  workers: 8
+  seed: 42
+  amp: true
+
+# ✅ YOLOX 전용(추가)
+yolox:
+  exp_file: "exps/custom/yolox_x_canon9.py"
+  devices: 1
+  batch: 8
+  fp16: true
+  occupy: true
+  ckpt: "/weights/yolox_x.pth"
+
+output:
+  weights_dir_in_container: "/weights"
+  naming: "{model}/gt/{job_id}/best.pt"
+  also_save_last: true
+
+tracking:
+  mlflow:
+    enabled: true
+    tracking_uri: "http://mlflow:5000"
+    experiment_name: "V2_GT_Training"
+  s3_artifacts:
+    enabled: true
+    bucket: "v2-artifacts"
+    prefix: "train/gt"

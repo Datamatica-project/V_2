@@ -1,0 +1,37 @@
+# configs/judge.yaml
+# Ensemble as Judge: PASS/FAIL 판단만 수행 (정답 생성/라벨 확정 금지)
+
+policy:
+  verdicts: ["STRONG_PASS", "WEAK_PASS", "FAIL"]
+
+  strong_pass:
+    min_agree_models: 3
+    class_must_match: true
+    iou_match_thresh: 0.60
+    min_conf_each: 0.30
+
+  weak_pass:
+    min_agree_models: 2
+    class_must_match: true
+    iou_match_thresh: 0.55
+    min_conf_each: 0.25
+    usage_note: "WEAK_PASS는 분석/샘플링/검증 용도. 기본적으로 학습 직접 사용 금지."
+
+  fail:
+    enable_reason_breakdown: true
+    reasons:
+      - "single_model_miss"
+      - "single_model_low_conf"
+      - "class_conflict"
+      - "localization_disagreement"
+      - "all_models_miss"
+      - "data_anomaly"
+
+normalizer:
+  bbox_format: "xyxy"
+  clip_to_image: true
+  round: 3
+
+filters:
+  drop_invalid_boxes: true
+  min_box_area_px: 16

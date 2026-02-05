@@ -1,0 +1,50 @@
+models:
+  yolov11:
+    name: "yolov11"
+    base_url: "http://yolov11:8020"
+    endpoints:
+      infer: "/infer"
+      train_gt: "/train/gt"
+      train_status: "/train/status"
+    weights_dir: "/weights"
+    artifacts_dir: "/artifacts"
+    label_source: "yolo"
+    data_layout:
+      images_dir: "images"
+      labels_dir: "labels"
+      annotations_dir: null
+
+  rtdetr:
+    name: "rtdetr"
+    base_url: "http://rtdetr:8021"
+    endpoints:
+      infer: "/infer"
+      train_gt: "/train/gt"
+      train_status: "/train/status"
+    weights_dir: "/weights"
+    artifacts_dir: "/artifacts"
+    label_source: "yolo"
+    data_layout:
+      images_dir: "images"
+      labels_dir: "labels"
+      annotations_dir: null
+
+  rtm:
+    name: "rtm"
+    base_url: "http://rtm:8022"
+    endpoints:
+      infer: "/infer"
+      train_gt: "/train/gt"
+      train_status: "/train/status"
+    weights_dir: "/weights"
+    artifacts_dir: "/artifacts"
+    label_source: "coco"
+    data_layout:
+      images_dir: "images"
+      labels_dir: null
+      annotations_dir: "annotations"
+
+timeouts_sec:
+  infer: 60
+  judge: 120
+  train_gt: 72000

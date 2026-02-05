@@ -1,0 +1,4531 @@
+{
+  "batch_id": "batch_gateway_64_mixed",
+  "items": [
+    {
+      "image_id": "img_0000",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0001",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0002",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0003",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0004",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0005",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0006",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0007",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0008",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0009",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0010",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0011",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0012",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0013",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0014",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0015",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0016",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0017",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0018",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0019",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0020",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0021",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0022",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0023",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0024",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0025",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0026",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0027",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0028",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0029",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0030",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0031",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0032",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0033",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0034",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0035",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0036",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0037",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0038",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0039",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0040",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0041",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0042",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0043",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0044",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0045",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0046",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0047",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0048",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0049",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0050",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0051",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0052",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0053",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0054",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0055",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0056",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0057",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0058",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0059",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0060",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0061",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0062",
+      "image_path": "__dummy__"
+    },
+    {
+      "image_id": "img_0063",
+      "image_path": "__dummy__"
+    }
+  ],
+  "responses": {
+    "yolox": {
+      "model": "yolox",
+      "batch_id": "batch_gateway_64_mixed",
+      "ok": true,
+      "raw": {
+        "results": [
+          {
+            "image_id": "img_0000",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0001",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0002",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0003",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0004",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0005",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0006",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0007",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0008",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0009",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0010",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0011",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0012",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0013",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0014",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0015",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0016",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0017",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0018",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0019",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0020",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0021",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0022",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0023",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0024",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0025",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0026",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0027",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0028",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0029",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0030",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0031",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0032",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0033",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0034",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0035",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0036",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0037",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0038",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0039",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0040",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0041",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0042",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0043",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0044",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0045",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0046",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0047",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0048",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0049",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0050",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0051",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.9,
+                "xyxy": [
+                  50,
+                  100,
+                  130,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.88,
+                "xyxy": [
+                  250,
+                  120,
+                  310,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.92,
+                "xyxy": [
+                  470,
+                  110,
+                  550,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0052",
+            "detections": []
+          },
+          {
+            "image_id": "img_0053",
+            "detections": []
+          },
+          {
+            "image_id": "img_0054",
+            "detections": []
+          },
+          {
+            "image_id": "img_0055",
+            "detections": []
+          },
+          {
+            "image_id": "img_0056",
+            "detections": []
+          },
+          {
+            "image_id": "img_0057",
+            "detections": []
+          },
+          {
+            "image_id": "img_0058",
+            "detections": []
+          },
+          {
+            "image_id": "img_0059",
+            "detections": []
+          },
+          {
+            "image_id": "img_0060",
+            "detections": []
+          },
+          {
+            "image_id": "img_0061",
+            "detections": []
+          },
+          {
+            "image_id": "img_0062",
+            "detections": []
+          },
+          {
+            "image_id": "img_0063",
+            "detections": []
+          }
+        ]
+      }
+    },
+    "yolov11": {
+      "model": "yolov11",
+      "batch_id": "batch_gateway_64_mixed",
+      "ok": true,
+      "raw": {
+        "results": [
+          {
+            "image_id": "img_0000",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0001",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0002",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0003",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0004",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0005",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0006",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0007",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0008",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0009",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0010",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0011",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0012",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0013",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0014",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0015",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0016",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0017",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0018",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0019",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0020",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0021",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0022",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0023",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0024",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0025",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0026",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0027",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0028",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0029",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0030",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0031",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0032",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0033",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0034",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0035",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0036",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0037",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0038",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0039",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  55,
+                  100,
+                  135,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  255,
+                  120,
+                  315,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  475,
+                  110,
+                  555,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0040",
+            "detections": []
+          },
+          {
+            "image_id": "img_0041",
+            "detections": []
+          },
+          {
+            "image_id": "img_0042",
+            "detections": []
+          },
+          {
+            "image_id": "img_0043",
+            "detections": []
+          },
+          {
+            "image_id": "img_0044",
+            "detections": []
+          },
+          {
+            "image_id": "img_0045",
+            "detections": []
+          },
+          {
+            "image_id": "img_0046",
+            "detections": []
+          },
+          {
+            "image_id": "img_0047",
+            "detections": []
+          },
+          {
+            "image_id": "img_0048",
+            "detections": []
+          },
+          {
+            "image_id": "img_0049",
+            "detections": []
+          },
+          {
+            "image_id": "img_0050",
+            "detections": []
+          },
+          {
+            "image_id": "img_0051",
+            "detections": []
+          },
+          {
+            "image_id": "img_0052",
+            "detections": []
+          },
+          {
+            "image_id": "img_0053",
+            "detections": []
+          },
+          {
+            "image_id": "img_0054",
+            "detections": []
+          },
+          {
+            "image_id": "img_0055",
+            "detections": []
+          },
+          {
+            "image_id": "img_0056",
+            "detections": []
+          },
+          {
+            "image_id": "img_0057",
+            "detections": []
+          },
+          {
+            "image_id": "img_0058",
+            "detections": []
+          },
+          {
+            "image_id": "img_0059",
+            "detections": []
+          },
+          {
+            "image_id": "img_0060",
+            "detections": []
+          },
+          {
+            "image_id": "img_0061",
+            "detections": []
+          },
+          {
+            "image_id": "img_0062",
+            "detections": []
+          },
+          {
+            "image_id": "img_0063",
+            "detections": []
+          }
+        ]
+      }
+    },
+    "rtdetr": {
+      "model": "rtdetr",
+      "batch_id": "batch_gateway_64_mixed",
+      "ok": true,
+      "raw": {
+        "results": [
+          {
+            "image_id": "img_0000",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0001",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0002",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0003",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0004",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0005",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0006",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0007",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0008",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0009",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0010",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0011",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0012",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0013",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0014",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0015",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0016",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0017",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0018",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0019",
+            "detections": [
+              {
+                "cls": 0,
+                "conf": 0.85,
+                "xyxy": [
+                  45,
+                  100,
+                  125,
+                  300
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.83,
+                "xyxy": [
+                  245,
+                  120,
+                  305,
+                  320
+                ]
+              },
+              {
+                "cls": 0,
+                "conf": 0.87,
+                "xyxy": [
+                  465,
+                  110,
+                  545,
+                  310
+                ]
+              }
+            ]
+          },
+          {
+            "image_id": "img_0020",
+            "detections": []
+          },
+          {
+            "image_id": "img_0021",
+            "detections": []
+          },
+          {
+            "image_id": "img_0022",
+            "detections": []
+          },
+          {
+            "image_id": "img_0023",
+            "detections": []
+          },
+          {
+            "image_id": "img_0024",
+            "detections": []
+          },
+          {
+            "image_id": "img_0025",
+            "detections": []
+          },
+          {
+            "image_id": "img_0026",
+            "detections": []
+          },
+          {
+            "image_id": "img_0027",
+            "detections": []
+          },
+          {
+            "image_id": "img_0028",
+            "detections": []
+          },
+          {
+            "image_id": "img_0029",
+            "detections": []
+          },
+          {
+            "image_id": "img_0030",
+            "detections": []
+          },
+          {
+            "image_id": "img_0031",
+            "detections": []
+          },
+          {
+            "image_id": "img_0032",
+            "detections": []
+          },
+          {
+            "image_id": "img_0033",
+            "detections": []
+          },
+          {
+            "image_id": "img_0034",
+            "detections": []
+          },
+          {
+            "image_id": "img_0035",
+            "detections": []
+          },
+          {
+            "image_id": "img_0036",
+            "detections": []
+          },
+          {
+            "image_id": "img_0037",
+            "detections": []
+          },
+          {
+            "image_id": "img_0038",
+            "detections": []
+          },
+          {
+            "image_id": "img_0039",
+            "detections": []
+          },
+          {
+            "image_id": "img_0040",
+            "detections": []
+          },
+          {
+            "image_id": "img_0041",
+            "detections": []
+          },
+          {
+            "image_id": "img_0042",
+            "detections": []
+          },
+          {
+            "image_id": "img_0043",
+            "detections": []
+          },
+          {
+            "image_id": "img_0044",
+            "detections": []
+          },
+          {
+            "image_id": "img_0045",
+            "detections": []
+          },
+          {
+            "image_id": "img_0046",
+            "detections": []
+          },
+          {
+            "image_id": "img_0047",
+            "detections": []
+          },
+          {
+            "image_id": "img_0048",
+            "detections": []
+          },
+          {
+            "image_id": "img_0049",
+            "detections": []
+          },
+          {
+            "image_id": "img_0050",
+            "detections": []
+          },
+          {
+            "image_id": "img_0051",
+            "detections": []
+          },
+          {
+            "image_id": "img_0052",
+            "detections": []
+          },
+          {
+            "image_id": "img_0053",
+            "detections": []
+          },
+          {
+            "image_id": "img_0054",
+            "detections": []
+          },
+          {
+            "image_id": "img_0055",
+            "detections": []
+          },
+          {
+            "image_id": "img_0056",
+            "detections": []
+          },
+          {
+            "image_id": "img_0057",
+            "detections": []
+          },
+          {
+            "image_id": "img_0058",
+            "detections": []
+          },
+          {
+            "image_id": "img_0059",
+            "detections": []
+          },
+          {
+            "image_id": "img_0060",
+            "detections": []
+          },
+          {
+            "image_id": "img_0061",
+            "detections": []
+          },
+          {
+            "image_id": "img_0062",
+            "detections": []
+          },
+          {
+            "image_id": "img_0063",
+            "detections": []
+          }
+        ]
+      }
+    }
+  },
+  "errors": {}
+}

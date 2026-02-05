@@ -1,0 +1,17 @@
+mmengine==0.10.7
+mmdet==3.3.0
+
+numpy==2.2.6
+opencv-python-headless
+pyyaml
+requests
+tqdm
+rich
+packaging
+typing-extensions
+pillow
+shapely
+networkx
+
+fastapi
+uvicorn[standard]

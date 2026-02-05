@@ -1,0 +1,93 @@
+# configs/ensemble.yaml
+# 목적:
+# - Judge/Ensemble 서버에서 "객체 단위 클러스터링 + PASS/FAIL/MISS 판정 + Draft 박스 생성"
+# - Export 시 PASS만 라벨로 내보내고(FAIL/MISS는 meta로만), UI 검수 우선순위 신호 제공
+
+ensemble:
+  # -----------------------------
+  # 1) 클러스터링(Consensus) 기본
+  # -----------------------------
+  # 같은 class + IoU >= iou_thr 인 박스들을 하나의 클러스터로 묶음
+  iou_thr: 0.50
+
+  # 개별 모델 박스 중 conf_thr 미만은 클러스터 후보에서 제외(노이즈 억제)
+  conf_thr: 0.25
+
+  # 합의 기준: min_agree=2면 2개 모델 이상이 겹쳐야 "합의 클러스터"로 인정
+  min_agree: 2
+
+  # strong_agree=3이면 3모델 모두 겹치면 PASS_3 후보
+  strong_agree: 3
+
+  # -----------------------------
+  # 2) 신뢰도(PASS_3/PASS_2/FAIL) 판정 기준 (튜닝 포인트)
+  # -----------------------------
+  # PASS_3 최소 conf (클러스터 대표 conf)
+  min_conf_p3: 0.55
+
+  # PASS_2 최소 conf
+  min_conf_p2: 0.35
+
+  # PASS_3 최소 pairwise IoU (클러스터 내부 모델 박스들 간 최소/평균 일관성)
+  min_pair_iou_p3: 0.55
+
+  # PASS_2 최소 pairwise IoU
+  min_pair_iou_p2: 0.40
+
+  # -----------------------------
+  # 3) FAIL_SINGLE / evidence 정리용 NMS-lite
+  # -----------------------------
+  # 합의 클러스터에 못 들어간 단일 박스(1모델 only)를 FAIL_SINGLE로 기록할 때,
+  # 모델별 top-k를 뽑고 NMS-lite로 중복을 줄이는 옵션
+  nms_lite_iou: 0.70
+  fail_single_top_k_per_model: 50
+
+output_policy:
+  # 라벨(최종 export)은 PASS만 포함
+  # FAIL/MISS는 meta.json에만 남기고, UI에서 “검수 우선순위”로 활용
+  export_only_if_verdict_in: ["PASS_3", "PASS_2"]
+
+  # meta.json에 무엇을 기록할지
+  meta:
+    enabled: true
+
+    # image 단위 요약(검수 우선순위)
+    include_image_level_summary: true
+
+    # 객체 단위 기록
+    include_object_index_id: true
+
+    # FAIL/MISS 객체에 대해서만 박스값 기록 (PASS는 박스 기록 생략 가능)
+    # - FAIL: 단일 모델 박스 또는 약한 합의 박스
+    # - MISS: 모델 간 합의 불가/탐지 실패
+    include_boxes_for: ["FAIL", "MISS"]
+
+    # "MISS 중 3모델 모두 박스는 있으나 합의 불가"일 때 큰 박스(union)를 만들지 여부
+    miss_disagree_union_box: true
+
+    # union 박스 만들 때 padding (픽셀 단위, 선택)
+    miss_union_pad_px: 0
+
+export:
+  # -----------------------------
+  # YOLO TXT export 설정
+  # -----------------------------
+  yolo:
+    enabled: true
+    out_dir: "labels"  # dataset zip 내부 상대경로
+    only_if_verdict_in: ["PASS_3", "PASS_2"]
+
+  # -----------------------------
+  # COCO JSON export 설정 (이미지 1장당 json or 추후 merge)
+  # -----------------------------
+  coco:
+    enabled: true
+    out_dir: "annotations" # dataset zip 내부 상대경로
+    only_if_verdict_in: ["PASS_3", "PASS_2"]
+
+debug:
+  # 개발 중 튜닝/디버그용: 모델별 원본 박스를 meta에 더 담을지 (기본 false 권장)
+  include_raw_model_boxes: false
+
+  # PASS까지 포함해서 모든 객체를 meta에 기록할지 (기본 false 권장)
+  include_pass_objects_in_meta: false
