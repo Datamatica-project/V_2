@@ -10,10 +10,8 @@ from typing import Any, Dict, List, Optional, Tuple, Iterable
 
 from fastapi import FastAPI, BackgroundTasks, HTTPException
 
-# ✅ SSOT import 규칙 준수 (api/는 src/만 import)
 from src.common.utils.logging import setup_logger, LogContext, log_event
 
-# ✅ DTO SSOT (중복 정의 금지)
 from src.common.dto.dto import (
     InferBatchRequest,
     ModelName,
@@ -30,14 +28,13 @@ DEFAULT_REGISTRY_ROOT = os.getenv("MODEL_REGISTRY_ROOT", "/workspace/logs/model_
 REGISTRY_DIR = Path(DEFAULT_REGISTRY_ROOT) / str(MODEL_NAME)
 REGISTRY_DIR.mkdir(parents=True, exist_ok=True)
 
-WEIGHTS_ROOT = Path(os.getenv("WEIGHTS_ROOT", "/weights"))  # ✅ root 권장
+WEIGHTS_ROOT = Path(os.getenv("WEIGHTS_ROOT", "/weights"))
 WEIGHTS_ROOT.mkdir(parents=True, exist_ok=True)
 
 DEFAULT_DEVICE = os.getenv("DEVICE", "cuda:0")
 DEFAULT_IMGSZ = int(os.getenv("DEFAULT_IMGSZ", "640"))
 DEFAULT_CONF = float(os.getenv("DEFAULT_CONF", "0.25"))
 
-# RTM config - env로 주입 권장
 RTM_CONFIG = os.getenv("RTM_CONFIG", "").strip()
 
 logger = setup_logger(
@@ -46,20 +43,15 @@ logger = setup_logger(
     level=os.getenv("LOG_LEVEL", "INFO"),
 )
 
-# -----------------------------
-# Optional runner imports
-# -----------------------------
 try:
-    # infer_batch(req: InferBatchRequest|dict) -> dict|pydantic
-    from src.rtm.infer import infer_batch as _infer_batch  # type: ignore
-except Exception:  # pragma: no cover
-    _infer_batch = None  # type: ignore
+    from src.rtm.infer import infer_batch as _infer_batch
+except Exception:
+    _infer_batch = None
 
 try:
-    # train_gt(*, config, gt_root, init_ckpt, out_ckpt, epochs, imgsz, device, extra) -> dict
-    from src.rtm.train_gt import train_gt as _train_gt  # type: ignore
-except Exception:  # pragma: no cover
-    _train_gt = None  # type: ignore
+    from src.rtm.train_gt import train_gt as _train_gt
+except Exception:
+    _train_gt = None
 
 app = FastAPI(title=f"{MODEL_NAME}-api", version="0.4.1")
 
@@ -77,10 +69,6 @@ log_event(
     train_runner_available=(_train_gt is not None),
 )
 
-
-# -----------------------------
-# Registry helpers
-# -----------------------------
 def _job_path(train_job_id: str) -> Path:
     return REGISTRY_DIR / f"train_{train_job_id}.json"
 
@@ -98,12 +86,7 @@ def _read_job(train_job_id: str) -> Dict[str, Any]:
         raise FileNotFoundError(str(p))
     return json.loads(p.read_text(encoding="utf-8"))
 
-
-# -----------------------------
-# Weight policy helpers (V2)
-# -----------------------------
 def _project_model_dir(user_key: str, project_id: str) -> Path:
-    # /weights/projects/{user}/{project}/{model}
     return (WEIGHTS_ROOT / "projects" / str(user_key) / str(project_id) / str(MODEL_NAME)).resolve()
 
 
@@ -137,9 +120,6 @@ def _list_version_dirs(base: Path) -> List[Path]:
 
 
 def _pick_best_or_latest_in_dir(d: Path, exts: Tuple[str, ...]) -> Optional[Path]:
-    """
-    디렉토리 안에서 best.* 우선, 없으면 mtime 최신.
-    """
     if not d.exists():
         return None
 
@@ -152,17 +132,10 @@ def _pick_best_or_latest_in_dir(d: Path, exts: Tuple[str, ...]) -> Optional[Path
         best_cands.sort(key=lambda p: p.stat().st_mtime, reverse=True)
         return best_cands[0]
 
-    # 없으면 전체 최신
     return _pick_latest_ckpt(d, exts=exts)
 
 
 def _pick_latest_project_weight(user_key: str, project_id: str) -> Optional[Path]:
-    """
-    정책:
-      - 가장 큰 v### 폴더부터 탐색
-      - 각 v폴더 내에서 best.* 우선, 없으면 최신 ckpt
-      - v폴더가 없으면 projects/{user}/{project}/{model} 전체에서 최신 ckpt
-    """
     base = _project_model_dir(user_key, project_id)
     exts = ("pth", "pt", "ckpt")
 
@@ -172,14 +145,10 @@ def _pick_latest_project_weight(user_key: str, project_id: str) -> Optional[Path
         if picked is not None:
             return picked
 
-    # v 폴더가 없거나 내부가 비었으면 전체에서 최신
     return _pick_latest_ckpt(base, exts=exts)
 
 
 def _next_project_version(user_key: str, project_id: str) -> int:
-    """
-    projects/{user}/{project}/{model}/v### 폴더 기준으로 다음 버전 계산 (v001부터)
-    """
     base = _project_model_dir(user_key, project_id)
     vdirs = _list_version_dirs(base)
     if not vdirs:
@@ -190,10 +159,6 @@ def _next_project_version(user_key: str, project_id: str) -> int:
 
 
 def _base_bdd100k_weight() -> Path:
-    """
-    v1 init: /weights/_base/{model}/base_bdd100k.*
-    (RTM은 보통 .pth)
-    """
     base_dir = (WEIGHTS_ROOT / "_base" / str(MODEL_NAME)).resolve()
     if not base_dir.exists():
         raise FileNotFoundError(f"base dir not found: {base_dir}")
@@ -210,13 +175,6 @@ def _base_bdd100k_weight() -> Path:
 
 
 def _resolve_init_for_train(req: GTTrainRequest) -> Path:
-    """
-    정책:
-      - req.baseline_weight_path 있으면 그걸 사용 (존재해야 함)
-      - 없으면:
-          - projects/{user}/{project}/{model}/ 에 기존 버전이 있으면 "직전 버전(latest, best 우선)"에서 시작 (v2~)
-          - 없으면: /weights/_base/{model}/base_bdd100k.* 에서 시작 (v1)
-    """
     if req.baseline_weight_path:
         p = Path(req.baseline_weight_path)
         if not p.is_absolute():
@@ -233,11 +191,6 @@ def _resolve_init_for_train(req: GTTrainRequest) -> Path:
         return prev
 
     return _base_bdd100k_weight()
-
-
-# -----------------------------
-# Infer response normalization -> ModelPredResponse(SSOT)
-# -----------------------------
 def _empty_results(req: InferBatchRequest) -> List[InferItemResult]:
     return [InferItemResult(image_id=it.image_id, detections=[]) for it in (req.items or [])]
 
@@ -271,12 +224,6 @@ def _as_dict_maybe(x: Any) -> Dict[str, Any]:
 
 
 def _iter_meta_candidates(out: Dict[str, Any]) -> Iterable[Dict[str, Any]]:
-    """
-    여러 구현/버전에서 meta가 올 수 있는 위치를 전부 훑는다.
-      - out["meta"]
-      - out["raw"]["meta"]
-      - out["raw"]["raw"]["meta"]  (이중 래핑되는 케이스 방어)
-    """
     meta = out.get("meta")
     if isinstance(meta, dict):
         yield meta
@@ -303,10 +250,6 @@ def _extract_meta_str(out: Dict[str, Any], key: str) -> Optional[str]:
 
 
 def _extract_weight_dir_used(out: Dict[str, Any], req_weight_dir: Optional[str]) -> Optional[str]:
-    """
-    runner가 meta.weight_dir_used를 내려주면 그걸 우선 사용.
-    없으면 요청의 weight_dir을 기록(추적 목적).
-    """
     v = _extract_meta_str(out, "weight_dir_used")
     if v:
         return v
@@ -314,11 +257,6 @@ def _extract_weight_dir_used(out: Dict[str, Any], req_weight_dir: Optional[str])
 
 
 def _extract_weight_used(out: Dict[str, Any]) -> Optional[str]:
-    """
-    weight_used 위치 다양성 대응:
-      - out["weight_used"]
-      - meta.weight_used (여러 위치)
-    """
     v = out.get("weight_used")
     if isinstance(v, (str, Path)):
         return str(v)
@@ -335,13 +273,6 @@ def _coerce_infer_output(
     *,
     elapsed_ms: int,
 ) -> Tuple[List[InferItemResult], Optional[str], bool, Optional[str], str, Optional[str]]:
-    """
-    raw_out(whatever) -> (results, weight_used, ok, error, batch_id, weight_dir_used)
-
-    - 결과는 SSOT InferItemResult / Detection로 강제 변환
-    - 누락된 image_id는 빈 결과로 채움
-    - weight_dir_used는 meta 우선, 없으면 request params.weight_dir 기록
-    """
     out: Dict[str, Any] = _as_dict_maybe(raw_out)
 
     ok = bool(out.get("ok", True))
@@ -383,22 +314,16 @@ def _coerce_infer_output(
                 dets.append(dd)
         fixed_results.append(InferItemResult(image_id=image_id, detections=dets))
 
-    # 누락 보정
     seen = {r.image_id for r in fixed_results}
     for it in req.items:
         if it.image_id not in seen:
             fixed_results.append(InferItemResult(image_id=it.image_id, detections=[]))
 
-    # 결과가 비어있다면 요청 기준 empty로
     if not fixed_results:
         fixed_results = _empty_results(req)
 
     return fixed_results, weight_used, ok, error, batch_id, weight_dir_used
 
-
-# -----------------------------
-# Endpoints
-# -----------------------------
 @app.get("/health")
 def health():
     return {"ok": True, "model": str(MODEL_NAME)}
@@ -409,7 +334,7 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
     t0 = time.time()
     params = req.params or {}
     run_id = params.get("run_id")
-    weight_dir = params.get("weight_dir")  # ✅ gateway가 주입하는 스코프
+    weight_dir = params.get("weight_dir")
     ctx = LogContext(run_id=str(run_id) if run_id else None, stage="infer", model=str(MODEL_NAME))
 
     log_event(
@@ -530,17 +455,10 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
 
         if _train_gt is None:
             raise RuntimeError("RTM train runner not available (import src.rtm.train_gt.train_gt failed)")
-
-        # ---------------------------------------------------------------------
-        # ✅ SSOT: RTM은 annotation/ 아래 COCO json만 사용
-        #   - gt_register에서 annotation/train.json, annotation/val.json을 생성한다.
-        #   - val은 train과 동일 파일이어도 OK(테스트 목적)
-        # ---------------------------------------------------------------------
         gt_root = Path(req.dataset.img_root).resolve()
         if not gt_root.exists():
             raise FileNotFoundError(f"dataset.img_root not found: {gt_root}")
 
-        # 방어적 지원: annotation/ 우선, 없으면 annotations/도 허용
         ann_dir = gt_root / "annotation"
         if not ann_dir.exists():
             ann_dir_alt = gt_root / "annotations"
@@ -573,7 +491,6 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             "init_weight": str(init_weight),
             "save_path": str(save_path),
             "version": version_tag,
-            # ✅ RTM SSOT 기록
             "dataset_train": str(train_path),
             "dataset_val": str(val_path),
             "annotation_dir": str(ann_dir),
@@ -585,8 +502,6 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         log_event(logger, "train_gt resolved", ctx=ctx, train_job_id=train_job_id, **resolved)
 
         out_dir.mkdir(parents=True, exist_ok=True)
-
-        # runner 시그니처가 고정이므로 train/val은 extra로 전달(호환성 유지)
         extra = dict(req.train.extra or {})
         extra["_dataset"] = {
             "img_root": str(gt_root),
@@ -648,7 +563,6 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
 
 @app.post("/train/gt", response_model=GTTrainResponse)
 def train_gt(req: GTTrainRequest, background: BackgroundTasks):
-    # ✅ model mismatch 차단
     if req.model != MODEL_NAME:
         raise HTTPException(status_code=400, detail=f"model mismatch: got {req.model}, expected {MODEL_NAME}")
 
@@ -658,10 +572,7 @@ def train_gt(req: GTTrainRequest, background: BackgroundTasks):
     if not req.dataset.img_root:
         raise HTTPException(status_code=400, detail="dataset.img_root is required")
 
-    # ✅ TEMP: COCO/recipe 기반 학습은 dataset.train/val을 config(overrides)에서 사용하므로 강제하지 않음
     # TODO: later - dataset.format으로 분기 (yolo면 train 필수, coco면 ann_file 필수)
-    # if not req.dataset.train:
-    #     raise HTTPException(status_code=400, detail="dataset.train is required")
 
     train_job_id = f"{MODEL_NAME}_{uuid.uuid4().hex[:10]}"
 

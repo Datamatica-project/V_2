@@ -9,7 +9,7 @@ from typing import Literal, Optional, Tuple
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from src.common.utils.register_gt import register_gt  # ✅ SSOT: src만 import
+from src.common.utils.register_gt import register_gt
 
 router = APIRouter(prefix="/api/v2/gt", tags=["GT"])
 
@@ -19,7 +19,6 @@ router = APIRouter(prefix="/api/v2/gt", tags=["GT"])
 GT_UNPACK_ROOT = Path(os.getenv("GT_UNPACK_ROOT", "/workspace/_tmp/gt_unpack")).resolve()
 GT_UNPACK_ROOT.mkdir(parents=True, exist_ok=True)
 
-# 허용할 이미지 확장자 (기본만)
 IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 
 
@@ -27,14 +26,6 @@ IMG_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".webp"}
 # Post-process GT for RTM (annotation only)
 # -----------------------------------------------------------------------------
 def _normalize_annotation_dir(gt_root: Path) -> Path | None:
-    """
-    GT_ROOT 아래에 annotations/ 또는 annotation/ 이 있으면
-    최종적으로 annotation/ 을 사용하도록 통일.
-
-    - annotation/ 이 이미 있으면 그걸 사용
-    - annotation/ 이 없고 annotations/ 만 있으면 annotations/ -> annotation/ rename
-    - 둘 다 없으면 None
-    """
     ann = gt_root / "annotation"
     anns = gt_root / "annotations"
 
@@ -49,14 +40,6 @@ def _normalize_annotation_dir(gt_root: Path) -> Path | None:
 
 
 def _ensure_rtm_train_val_json(ann_dir: Path, copy_mode: Literal["copy", "symlink"]) -> None:
-    """
-    annotation/ 아래 json 1개를 기준으로 train.json / val.json 을 생성한다.
-    (val은 train과 동일 파일을 복사/링크)
-
-    우선순위:
-      1) instances*.json
-      2) 그 외 첫 번째 *.json
-    """
     if not ann_dir.exists():
         return
 
@@ -90,10 +73,6 @@ def _ensure_rtm_train_val_json(ann_dir: Path, copy_mode: Literal["copy", "symlin
 
 
 def _postprocess_gt_for_rtm(gt_root: Path, copy_mode: Literal["copy", "symlink"]) -> None:
-    """
-    - annotations -> annotation 폴더명 통일
-    - annotation/*.json 1개를 기반으로 train.json/val.json 생성
-    """
     ann_dir = _normalize_annotation_dir(gt_root)
     if ann_dir is None:
         return
@@ -104,22 +83,15 @@ def _postprocess_gt_for_rtm(gt_root: Path, copy_mode: Literal["copy", "symlink"]
 # ZIP helpers (safe unzip)
 # -----------------------------------------------------------------------------
 def _safe_extract_zip(zip_path: Path, dst_dir: Path) -> None:
-    """
-    ZipSlip 방지용 안전 압축해제.
-    - 절대경로/상위경로(..) 포함 엔트리 차단
-    """
     dst_dir.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(zip_path, "r") as zf:
         for info in zf.infolist():
             name = info.filename
 
-            # 디렉토리 엔트리
             if name.endswith("/"):
                 continue
 
             p = Path(name)
-
-            # 절대경로/상위경로 차단
             if p.is_absolute() or ".." in p.parts:
                 raise HTTPException(status_code=400, detail=f"unsafe zip entry path: {name}")
 
@@ -143,10 +115,6 @@ def _count_images(images_dir: Path) -> int:
 
 
 def _list_top_dirs(p: Path) -> list[Path]:
-    """
-    extracted_dir 바로 아래의 최상위 디렉토리 목록
-    - macOS 메타(__MACOSX) 제외
-    """
     if not p.exists():
         return []
     return [x for x in p.iterdir() if x.is_dir() and x.name != "__MACOSX"]
@@ -154,17 +122,12 @@ def _list_top_dirs(p: Path) -> list[Path]:
 
 def _maybe_descend_single_root(extracted_dir: Path) -> Path:
     """
-    흔한 zip 구조(한 겹 감쌈)를 자동 처리한다.
-
     예)
       gt_xxx.zip
         gt_xxx/
           images/
           labels/
           annotations/
-
-    extracted_dir 아래 디렉토리가 "딱 1개"이고,
-    그 디렉토리 안에 images/가 있으면 그 안으로 내려가서 실제 root로 사용한다.
     """
     dirs = _list_top_dirs(extracted_dir)
     if len(dirs) == 1 and (dirs[0] / "images").exists():
@@ -173,12 +136,6 @@ def _maybe_descend_single_root(extracted_dir: Path) -> Path:
 
 
 def _validate_gt_layout(extracted_dir: Path) -> Tuple[bool, bool, int]:
-    """
-    최소 구조 검증:
-      - images/ 는 필수
-      - labels/ 또는 annotation(s)/ 중 하나는 존재해야 함 (GT니까)
-    반환: (has_labels, has_annotation, n_images)
-    """
     images_dir = extracted_dir / "images"
     if not images_dir.exists():
         raise HTTPException(status_code=400, detail="GT zip must contain 'images/' directory")
@@ -299,13 +256,8 @@ async def upload_gt_zip(
                     break
                 f.write(chunk)
 
-        # unzip safely
         _safe_extract_zip(tmp_zip, dst_dir)
-
-        # ✅ 한 겹 감싼 zip 자동 처리
         real_root = _maybe_descend_single_root(dst_dir)
-
-        # validate layout
         has_labels, has_ann, n_images = _validate_gt_layout(real_root)
 
         return UploadGTResponse(

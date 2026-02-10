@@ -297,10 +297,6 @@ def _call_train(model: str, req: GTTrainRequest) -> Dict[str, Any]:
 
 
 def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict[str, Any]) -> GTTrainRequest:
-    """
-    train_gt.yaml(SSOT) -> GTTrainRequest(모델 API 계약)
-    body는 identity만 받기 위해 여기서 나머지를 자동 채움.
-    """
     data = cfg.get("data", {}) or {}
     train = cfg.get("train", {}) or {}
 
@@ -310,10 +306,6 @@ def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict
     splits = (data.get("splits", {}) or {})
     split_train = str(splits.get("train", "train"))
     split_val = str(splits.get("val", "val"))
-
-    # dataset 매핑: (현재 모델 컨테이너들은 dataset.img_root를 "dataset root"로 해석)
-    # - yolov11/rtm: yolo 라벨 기준
-    # - rtdetr: ultralytics data.yaml 자동 생성 로직에 맞추어 images/train, images/val 구조 권장
     if model in ("yolov11", "rtm"):
         dataset = {
             "format": "yolo",
@@ -343,7 +335,6 @@ def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict
         },
     }
 
-    # RTM은 config가 필요할 수 있으니 train_gt.yaml에서 주입 가능하게
     if model == "rtm":
         rtm_block = cfg.get("rtm", {}) or {}
         rtm_config = rtm_block.get("config")
@@ -360,7 +351,6 @@ def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict
     return GTTrainRequest(**payload)
 
 
-# ✅ 단일 모델: model은 path로, body는 identity-only
 @app.post(
     "/loop/train/gt/run/{model}",
     response_model=GTTrainResponse,
@@ -379,7 +369,6 @@ def loop_train_gt_run(
     return _call_train(model, gt_req)
 
 
-# ✅ 3모델 전체: body는 identity-only
 @app.post(
     "/loop/train/gt/run_all",
     tags=["Loop: Train GT"],
