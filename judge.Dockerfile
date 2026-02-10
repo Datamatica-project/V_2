@@ -20,6 +20,7 @@ RUN pip install --no-cache-dir \
     uvicorn \
     pydantic \
     requests \
+    python-multipart \
     numpy \
     boto3 \
     mlflow \

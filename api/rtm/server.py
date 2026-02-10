@@ -510,11 +510,6 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             raw={"meta": {"weight_dir_used": str(weight_dir) if weight_dir else None}},
         )
         return resp.model_dump()
-
-
-# -----------------------------
-# Train core (policy-aligned)
-# -----------------------------
 def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
     ident = req.identity
     ctx = LogContext(job_id=ident.job_id, run_id=ident.run_id, stage="train_gt", model=str(MODEL_NAME))
@@ -536,23 +531,35 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         if _train_gt is None:
             raise RuntimeError("RTM train runner not available (import src.rtm.train_gt.train_gt failed)")
 
-        # dataset 검증
+        # ---------------------------------------------------------------------
+        # ✅ SSOT: RTM은 annotation/ 아래 COCO json만 사용
+        #   - gt_register에서 annotation/train.json, annotation/val.json을 생성한다.
+        #   - val은 train과 동일 파일이어도 OK(테스트 목적)
+        # ---------------------------------------------------------------------
         gt_root = Path(req.dataset.img_root).resolve()
         if not gt_root.exists():
             raise FileNotFoundError(f"dataset.img_root not found: {gt_root}")
 
-        # train/val 경로는 DTO 의미상 중요하므로 존재여부도 확인(있으면)
-        train_path = Path(req.dataset.train).resolve() if req.dataset.train else None
-        if train_path and not train_path.exists():
-            raise FileNotFoundError(f"dataset.train not found: {train_path}")
-        val_path = Path(req.dataset.val).resolve() if getattr(req.dataset, "val", None) else None
-        if val_path and not val_path.exists():
-            raise FileNotFoundError(f"dataset.val not found: {val_path}")
+        # 방어적 지원: annotation/ 우선, 없으면 annotations/도 허용
+        ann_dir = gt_root / "annotation"
+        if not ann_dir.exists():
+            ann_dir_alt = gt_root / "annotations"
+            if ann_dir_alt.exists():
+                ann_dir = ann_dir_alt
 
-        # ✅ init weight: v1=base_bdd100k, v2~=prev(best 우선)
+        if not ann_dir.exists():
+            raise FileNotFoundError(f"RTM annotation dir not found: {ann_dir}")
+
+        train_path = ann_dir / "train.json"
+        val_path = ann_dir / "val.json"
+
+        if not train_path.exists():
+            raise FileNotFoundError(f"RTM train annotation not found: {train_path}")
+        if not val_path.exists():
+            raise FileNotFoundError(f"RTM val annotation not found: {val_path}")
+
         init_weight = _resolve_init_for_train(req)
 
-        # ✅ output weight: /weights/projects/{user}/{project}/{model}/v###/best.pth
         user_key = str(ident.user_key)
         project_id = str(ident.project_id)
         next_v = _next_project_version(user_key, project_id)
@@ -566,8 +573,10 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             "init_weight": str(init_weight),
             "save_path": str(save_path),
             "version": version_tag,
-            "dataset_train": str(train_path) if train_path else None,
-            "dataset_val": str(val_path) if val_path else None,
+            # ✅ RTM SSOT 기록
+            "dataset_train": str(train_path),
+            "dataset_val": str(val_path),
+            "annotation_dir": str(ann_dir),
         }
         job = _read_job(train_job_id)
         job["resolved"] = resolved
@@ -581,9 +590,11 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         extra = dict(req.train.extra or {})
         extra["_dataset"] = {
             "img_root": str(gt_root),
-            "train": str(train_path) if train_path else None,
-            "val": str(val_path) if val_path else None,
+            "train": str(train_path),
+            "val": str(val_path),
         }
+        # 선택: runner가 annotation_dir을 직접 쓰는 경우 대비
+        extra["_dataset"]["annotation_dir"] = str(ann_dir)
 
         artifacts = _train_gt(
             config=str(cfg),
@@ -634,6 +645,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         )
 
 
+
 @app.post("/train/gt", response_model=GTTrainResponse)
 def train_gt(req: GTTrainRequest, background: BackgroundTasks):
     # ✅ model mismatch 차단
@@ -643,11 +655,13 @@ def train_gt(req: GTTrainRequest, background: BackgroundTasks):
     if not req.identity.job_id:
         raise HTTPException(status_code=400, detail="identity.job_id is required")
 
-    # dataset 최소 검증
     if not req.dataset.img_root:
         raise HTTPException(status_code=400, detail="dataset.img_root is required")
-    if not req.dataset.train:
-        raise HTTPException(status_code=400, detail="dataset.train is required")
+
+    # ✅ TEMP: COCO/recipe 기반 학습은 dataset.train/val을 config(overrides)에서 사용하므로 강제하지 않음
+    # TODO: later - dataset.format으로 분기 (yolo면 train 필수, coco면 ann_file 필수)
+    # if not req.dataset.train:
+    #     raise HTTPException(status_code=400, detail="dataset.train is required")
 
     train_job_id = f"{MODEL_NAME}_{uuid.uuid4().hex[:10]}"
 

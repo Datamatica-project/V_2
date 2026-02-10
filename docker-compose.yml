@@ -2,6 +2,7 @@ version: "3.9"
 
 services:
   yolov11:
+    shm_size: 8gb
     build:
       context: .
       dockerfile: yolov11.Dockerfile
@@ -9,11 +10,10 @@ services:
     gpus: all
     ports:
       - "8020:8020"
+    working_dir: /workspace
     volumes:
-      # ✅ 프로젝트 루트 전체 마운트 (api + src + configs + common 등 모두 접근)
       - ./:/workspace
-      # ✅ weights/artifacts/datasets 고정 경로
-      - ./storage/weights/yolov11:/weights
+      - ./storage/weights:/weights
       - ./storage/artifacts/yolov11:/artifacts
       - ./storage/datasets:/datasets:ro
     environment:
@@ -21,20 +21,24 @@ services:
       PYTHONPATH: /workspace
       WEIGHTS_ROOT: /weights
       ARTIFACTS_DIR: /artifacts
-
-      # ✅ GPU 고정: yolov11 -> GPU 0
       NVIDIA_VISIBLE_DEVICES: "0"
       NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
-
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_DEFAULT_REGION: us-east-1
     depends_on:
       - minio
-    command: uvicorn api.yolov11.server:app --host 0.0.0.0 --port 8020 --reload
+    command: >
+      uvicorn api.yolov11.server:app
+      --app-dir /workspace
+      --host 0.0.0.0 --port 8020
+      --reload
+      --reload-dir /workspace/api
+      --reload-dir /workspace/src
 
   rtdetr:
+    shm_size: 8gb
     build:
       context: .
       dockerfile: rtdetr.Dockerfile
@@ -42,9 +46,10 @@ services:
     gpus: all
     ports:
       - "8021:8021"
+    working_dir: /workspace
     volumes:
       - ./:/workspace
-      - ./storage/weights/rtdetr:/weights
+      - ./storage/weights:/weights
       - ./storage/artifacts/rtdetr:/artifacts
       - ./storage/datasets:/datasets:ro
     environment:
@@ -54,16 +59,22 @@ services:
       ARTIFACTS_DIR: /artifacts
       NVIDIA_VISIBLE_DEVICES: "1"
       NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
-
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_DEFAULT_REGION: us-east-1
     depends_on:
       - minio
-    command: uvicorn api.rtdetr.server:app --host 0.0.0.0 --port 8021 --reload
+    command: >
+      uvicorn api.rtdetr.server:app
+      --app-dir /workspace
+      --host 0.0.0.0 --port 8021
+      --reload
+      --reload-dir /workspace/api
+      --reload-dir /workspace/src
 
   rtm:
+    shm_size: 8gb
     build:
       context: .
       dockerfile: rtm.Dockerfile
@@ -71,9 +82,10 @@ services:
     gpus: all
     ports:
       - "8022:8022"
+    working_dir: /workspace
     volumes:
       - ./:/workspace
-      - ./storage/weights/rtm:/weights
+      - ./storage/weights:/weights
       - ./storage/artifacts/rtm:/artifacts
       - ./storage/datasets:/datasets:ro
     environment:
@@ -84,29 +96,35 @@ services:
       RTM_CONFIG: /workspace/api/rtm_configs/rtmdet_config.py
       NVIDIA_VISIBLE_DEVICES: "2"
       NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
-
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_DEFAULT_REGION: us-east-1
     depends_on:
       - minio
-    command: uvicorn api.rtm.server:app --host 0.0.0.0 --port 8022 --reload
+    command: >
+      uvicorn api.rtm.server:app
+      --app-dir /workspace
+      --host 0.0.0.0 --port 8022
+      --reload
+      --reload-dir /workspace/api
+      --reload-dir /workspace/src
 
   judge:
+    shm_size: 8gb
     build:
       context: .
       dockerfile: judge.Dockerfile
     container_name: v2-judge
     ports:
       - "8025:8025"
+    working_dir: /workspace
     volumes:
       - ./:/workspace
       - ./script:/script:ro
       - ./logs:/logs
       - ./configs:/configs:ro
       - ./storage/artifacts/judge:/artifacts
-      # (선택) judge가 datasets 직접 읽어야 하면 유지
       - ./storage/datasets:/datasets:ro
     environment:
       PYTHONPATH: /workspace
@@ -114,16 +132,13 @@ services:
       CONFIGS_DIR: /configs
       RUN_GT_TRAIN_SCRIPT: /script/tools/run_gt_train.py
       PYTHON_BIN: python
-
       YOLOV11_URL: http://yolov11:8020/infer
       RTDETR_URL: http://rtdetr:8021/infer
       RTM_URL: http://rtm:8022/infer
-
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_DEFAULT_REGION: us-east-1
-
       MLFLOW_TRACKING_URI: http://mlflow:5000
       ARTIFACTS_DIR: /artifacts
     depends_on:
@@ -132,7 +147,14 @@ services:
       - rtm
       - minio
       - mlflow
-    command: uvicorn api.judge.server:app --host 0.0.0.0 --port 8025 --reload
+    command: >
+      uvicorn api.judge.server:app
+      --app-dir /workspace
+      --host 0.0.0.0 --port 8025
+      --reload
+      --reload-dir /workspace/api
+      --reload-dir /workspace/src
+      --reload-dir /workspace/configs
 
   minio:
     image: minio/minio:latest
@@ -157,7 +179,6 @@ services:
     environment:
       MLFLOW_BACKEND_STORE_URI: sqlite:////mlflow/mlflow.db
       MLFLOW_DEFAULT_ARTIFACT_ROOT: s3://v2-artifacts
-
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
       AWS_DEFAULT_REGION: us-east-1

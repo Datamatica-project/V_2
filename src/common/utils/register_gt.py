@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
 """
-register_gt.py (V2)
+register_gt.py (V2) - RTM view 버전
+
 - extracted_dir 를 GT_versions/GT_<ingest_id> 로 등록
 - storage/GT -> 해당 버전으로 current 심볼릭 링크 갱신
-- + YOLOX view 생성: yolox/{train2017,val2017,annotations/instances_*.json}
+- + RTM view 생성: rtm/images/{train,val}, rtm/annotations/instances_{train,val}.json
 
 전제(권장):
 extracted_dir/
   images/          (또는 images/train, images/val)
-  labels/          (YOLO용)
+  labels/          (YOLO txt; 선택적)
   annotations/     (COCO json 최소 1개)
 """
 
@@ -18,7 +19,7 @@ import json
 import os
 import shutil
 from pathlib import Path
-from typing import Literal, Optional, Tuple, List
+from typing import Literal, Tuple, List
 
 
 PROJECT_ROOT = Path(os.getenv("PROJECT_ROOT", "/workspace"))
@@ -30,13 +31,6 @@ GT_CURRENT = STORAGE / "GT"
 
 def _ensure_dir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
-
-
-def _safe_symlink(src: Path, dst: Path) -> None:
-    dst.parent.mkdir(parents=True, exist_ok=True)
-    if dst.exists() or dst.is_symlink():
-        dst.unlink()
-    os.symlink(str(src), str(dst))
 
 
 def _copy_or_symlink_tree(src: Path, dst: Path, copy_mode: Literal["copy", "symlink"]) -> None:
@@ -81,18 +75,17 @@ def _dump_json(p: Path, obj: dict) -> None:
 
 def _normalize_coco_filenames_for_dir(coco: dict, image_dir: Path, sample_k: int = 50) -> dict:
     """
-    YOLOX view json에서만 file_name을 '실제 존재하는 파일'에 맞게 보정.
+    RTM view json에서만 file_name을 '실제 존재하는 파일'에 맞게 보정.
     - 원본 json은 건드리지 않기 위해, 복사본 coco dict를 받아 수정해서 반환.
     - 전략:
       1) file_name 그대로 image_dir/file_name 존재하면 OK
       2) 안 되면 basename으로 바꿔서 image_dir/basename 존재하면 수정
-      3) 그래도 안 되면 그대로 둠(나중에 학습에서 터지면 strict 처리 가능)
+      3) 그래도 안 되면 그대로 둠
     """
     if "images" not in coco or not isinstance(coco["images"], list):
         return coco
 
     imgs: List[dict] = coco["images"]
-    # 샘플링은 앞에서부터 sample_k개만 체크
     for im in imgs[: max(1, min(sample_k, len(imgs)))]:
         fn = im.get("file_name")
         if not isinstance(fn, str) or not fn:
@@ -108,19 +101,18 @@ def _normalize_coco_filenames_for_dir(coco: dict, image_dir: Path, sample_k: int
             im["file_name"] = base
             continue
 
-        # 추가로 "train/xxx.jpg" 같은 경우도 basename으로 정리되는데
-        # 파일이 없다면 그대로 둔다.
-        # (여기서 억지로 바꾸면 오히려 틀릴 수 있음)
     return coco
 
 
-def _make_yolox_view(
+def _make_rtm_view(
     gt_root: Path,
     use_train_as_val: bool = True,
     copy_mode: Literal["copy", "symlink"] = "symlink",
 ) -> None:
     """
-    gt_root (GT_versions/GT_<id>) 아래에 yolox view 생성
+    gt_root (GT_versions/GT_<id>) 아래에 RTM view 생성
+      - rtm/images/train, rtm/images/val
+      - rtm/annotations/instances_train.json, instances_val.json
     """
     images_dir = gt_root / "images"
     ann_dir = gt_root / "annotations"
@@ -135,45 +127,48 @@ def _make_yolox_view(
     if (images_dir / "val").exists():
         val_src = images_dir / "val"
     else:
-        val_src = train_src if use_train_as_val else images_dir  # fallback
+        val_src = train_src if use_train_as_val else images_dir
 
-    yolox_dir = gt_root / "yolox"
-    train2017 = yolox_dir / "train2017"
-    val2017 = yolox_dir / "val2017"
-    yolox_ann = yolox_dir / "annotations"
+    rtm_dir = gt_root / "rtm"
+    rtm_images = rtm_dir / "images"
+    rtm_train = rtm_images / "train"
+    rtm_val = rtm_images / "val"
+    rtm_ann = rtm_dir / "annotations"
 
-    # train2017/val2017 link (or copy)
-    if train2017.exists() or train2017.is_symlink():
-        train2017.unlink()
-    if val2017.exists() or val2017.is_symlink():
-        val2017.unlink()
+    _ensure_dir(rtm_images)
+    _ensure_dir(rtm_ann)
 
+    # 기존 링크/폴더 정리(있으면 삭제)
+    for p in (rtm_train, rtm_val):
+        if p.exists() or p.is_symlink():
+            if p.is_dir() and not p.is_symlink():
+                shutil.rmtree(p)
+            else:
+                p.unlink()
+
+    # train/val link (or copy)
     if copy_mode == "copy":
-        # copy는 tree 복사가 커서 비추천이지만 옵션 지원은 함
-        shutil.copytree(train_src, train2017)
+        shutil.copytree(train_src, rtm_train)
         if use_train_as_val:
-            # val은 train과 동일하게 복제
-            shutil.copytree(train_src, val2017)
+            shutil.copytree(train_src, rtm_val)
         else:
-            shutil.copytree(val_src, val2017)
+            shutil.copytree(val_src, rtm_val)
     else:
-        os.symlink(str(train_src), str(train2017))
-        os.symlink(str(train_src if use_train_as_val else val_src), str(val2017))
+        os.symlink(str(train_src), str(rtm_train))
+        os.symlink(str(train_src if use_train_as_val else val_src), str(rtm_val))
 
-    # annotations json 준비: train json 하나를 골라서 2개로 만든다(이름만 바꾸기 + file_name 정규화)
+    # annotations json 준비: train json 하나를 골라서 2개로 만든다(파일명만 + file_name 정규화)
     src_json = _pick_coco_json(ann_dir)
     coco = _load_json(src_json)
 
-    # train용: train2017 기준으로 file_name 정리
     train_coco = json.loads(json.dumps(coco, ensure_ascii=False))
-    train_coco = _normalize_coco_filenames_for_dir(train_coco, train2017)
+    train_coco = _normalize_coco_filenames_for_dir(train_coco, rtm_train)
 
-    # val용: train을 그대로 복제 (use_train_as_val=True)
     val_coco = json.loads(json.dumps(train_coco, ensure_ascii=False))
+    val_coco = _normalize_coco_filenames_for_dir(val_coco, rtm_val)
 
-    _ensure_dir(yolox_ann)
-    _dump_json(yolox_ann / "instances_train2017.json", train_coco)
-    _dump_json(yolox_ann / "instances_val2017.json", val_coco)
+    _dump_json(rtm_ann / "instances_train.json", train_coco)
+    _dump_json(rtm_ann / "instances_val.json", val_coco)
 
 
 def register_gt(
@@ -181,7 +176,7 @@ def register_gt(
     extracted_dir: Path,
     copy_mode: Literal["copy", "symlink"] = "symlink",
     strict: bool = True,
-    make_yolox_view: bool = True,
+    make_rtm_view: bool = True,
     use_train_as_val: bool = True,
 ) -> Path:
     """
@@ -194,12 +189,18 @@ def register_gt(
 
     # basic validation
     images = extracted_dir / "images"
-    labels = extracted_dir / "labels"
     ann = extracted_dir / "annotations"
+    # labels는 YOLO용이므로 "권장"이지만, COCO만 들어오는 케이스도 있어서 hard-required는 상황에 따라
+    labels = extracted_dir / "labels"
 
-    missing = [p.name for p in (images, labels, ann) if not p.exists()]
-    if missing and strict:
-        raise FileNotFoundError(f"missing required dirs in extracted_dir: {missing}")
+    missing_required = [p.name for p in (images, ann) if not p.exists()]
+    if missing_required and strict:
+        raise FileNotFoundError(f"missing required dirs in extracted_dir: {missing_required}")
+
+    if strict and (not labels.exists()):
+        # strict에서 labels까지 강제하고 싶으면 이 라인을 유지
+        # YOLO 라벨이 필수가 아니라면 아래 2줄을 주석 처리하면 됨.
+        raise FileNotFoundError("missing labels dir in extracted_dir (strict=True)")
 
     GT_VERSIONS.mkdir(parents=True, exist_ok=True)
     gt_version_dir = GT_VERSIONS / f"GT_{ingest_id}"
@@ -212,14 +213,11 @@ def register_gt(
         GT_CURRENT.unlink()
     os.symlink(str(gt_version_dir), str(GT_CURRENT))
 
-    # 3) make YOLOX view
-    if make_yolox_view:
+    # 3) make RTM view
+    if make_rtm_view:
         try:
-            _make_yolox_view(gt_version_dir, use_train_as_val=use_train_as_val, copy_mode="symlink")
-            # (yolox view는 symlink로 고정 추천: 빨라야 함)
+            _make_rtm_view(gt_version_dir, use_train_as_val=use_train_as_val, copy_mode="symlink")
         except Exception:
             if strict:
                 raise
-            # strict=False면 yolox view 실패해도 등록은 유지
-
     return gt_version_dir

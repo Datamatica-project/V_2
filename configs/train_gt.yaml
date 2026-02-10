@@ -11,7 +11,7 @@ data:
     bucket: "v2-datasets"
     prefix: "GT/current"
   local:
-    root: "/workspace/storage/GT"   # ✅ run_gt_train.py가 읽는 키
+    root: "/workspace/storage/datasets/test_gt"
     images_subdir: "images"
     labels_subdir: "labels"
   splits:
@@ -28,7 +28,6 @@ train:
   seed: 42
   amp: true
 
-# ✅ YOLOX 전용(추가)
 yolox:
   exp_file: "exps/custom/yolox_x_canon9.py"
   devices: 1
