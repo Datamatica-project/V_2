@@ -9,7 +9,6 @@ from typing import Literal, Optional, Tuple
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-# ✅ SSOT: register_gt가 (gt_version_dir, current_gt_path)를 반환한다고 가정
 from src.common.utils.register_gt import register_gt
 
 router = APIRouter(prefix="/api/v2/gt", tags=["GT"])

@@ -34,11 +34,6 @@ except Exception:  # pragma: no cover
 
 MODEL_NAME: ModelName = "yolov11"
 
-# =============================================================================
-# ✅ GPU policy (Simple default = GPU 1)
-# - 요청에서 device가 와도 차단/기록하지 않고 무시.
-# - ultralytics 호출에 device="1"를 항상 주입해서 GPU1을 사용하게 한다.
-# =============================================================================
 FIXED_GPU_INDEX = os.getenv("FIXED_GPU_INDEX", "1").strip() or "1"
 
 
@@ -354,7 +349,7 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
     conf = float(params.get("conf", DEFAULT_CONF))
     iou = float(params.get("iou", DEFAULT_IOU))
 
-    device = _ultra_device()  # ✅ 항상 GPU1
+    device = _ultra_device()
 
     log_event(
         logger,
@@ -409,7 +404,7 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             imgsz=imgsz,
             conf=conf,
             iou=iou,
-            device=device,  # ✅ GPU1 고정 주입
+            device=device,
             verbose=False,
         )
 
@@ -533,7 +528,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         out_dir = _project_model_dir(user_key, project_id) / version_tag
         save_path = out_dir / "best.pt"
 
-        train_device = _ultra_device()  # ✅ 항상 GPU1
+        train_device = _ultra_device()
 
         job = _read_job(train_job_id)
         job["resolved"] = {
@@ -578,7 +573,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             workers=int(extra.get("workers", 8)),
             seed=int(extra.get("seed", 42)),
             amp=bool(extra.get("amp", True)),
-            device=train_device,  # ✅ GPU1 고정 주입
+            device=train_device,
             verbose=False,
         )
 

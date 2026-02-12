@@ -56,10 +56,6 @@ def _list_top_dirs(p: Path) -> list[Path]:
 
 
 def _maybe_descend_single_root(extracted_dir: Path) -> Path:
-    """
-    ZIP 안에 단일 루트 폴더가 있고 그 아래 images/ 가 있는 경우,
-    그 루트로 한 단계 내려가서 반환.
-    """
     dirs = _list_top_dirs(extracted_dir)
     if len(dirs) == 1 and (dirs[0] / "images").exists():
         return dirs[0]
@@ -81,9 +77,6 @@ def _copytree_or_symlink(src: Path, dst: Path, copy_mode: CopyMode) -> None:
 
 
 def _symlink_dir_relative(link_path: Path, target_dir: Path) -> None:
-    """
-    link_path 위치에서 target_dir로 가는 상대 심링크를 생성.
-    """
     link_path.parent.mkdir(parents=True, exist_ok=True)
     if link_path.exists() or link_path.is_symlink():
         link_path.unlink()
@@ -118,10 +111,6 @@ def _dump_json(p: Path, obj: dict) -> None:
 
 
 def _normalize_coco_filenames_for_dir(coco: dict, image_dir: Path, sample_k: int = 50) -> dict:
-    """
-    RTM view json에서만 file_name을 '실제 존재하는 파일'에 맞게 보정.
-    원본 json은 건드리지 않기 위해 복사본 dict를 받아 수정/반환.
-    """
     if "images" not in coco or not isinstance(coco["images"], list):
         return coco
 
@@ -149,11 +138,6 @@ def _make_rtm_view(
     use_train_as_val: bool = True,
     copy_mode: CopyMode = "symlink",
 ) -> None:
-    """
-    gt_root 아래에 rtm view 생성:
-      - rtm/images/train, rtm/images/val
-      - rtm/annotations/instances_train.json, instances_val.json
-    """
     images_dir = gt_root / "images"
     ann_dir = gt_root / "annotations"
 
@@ -208,13 +192,6 @@ def register_gt(
     make_rtm_view: bool = True,
     use_train_as_val: bool = True,
 ) -> tuple[Path, Path]:
-    """
-    returns:
-      (gt_version_dir, current_gt_path)
-
-    - gt_version_dir: storage/GT_versions/GT_<ingest_id>
-    - current_gt_path: storage/GT/current (심링크)
-    """
     if not ingest_id:
         raise ValueError("ingest_id is empty")
 

@@ -23,12 +23,6 @@ from src.common.dto.dto import (
 from src.common.utils.logging import LogContext, log_event, setup_logger
 
 MODEL_NAME: ModelName = "rtm"
-
-# =============================================================================
-# ✅ CODE-LEVEL GPU PINNING (docker-compose 안 먹을 때 최후의 보루)
-#   - torch/mmengine/mmdet 등 CUDA를 만질 수 있는 모듈 import 전에 실행돼야 함.
-#   - 컨테이너에 GPU가 여러 개 노출돼도, 이 프로세스는 "0번만 보이게" 강제한다.
-# =============================================================================
 os.environ.setdefault("CUDA_DEVICE_ORDER", "PCI_BUS_ID")
 os.environ["CUDA_VISIBLE_DEVICES"] = os.getenv("CUDA_VISIBLE_DEVICES", "0").strip() or "0"
 
@@ -40,12 +34,6 @@ FIXED_DEVICE = "cuda:0"
 def _fixed_device() -> str:
     return str(FIXED_DEVICE)
 
-
-# =============================================================================
-# ✅ OVERRIDE POLICY (요청이 device를 보내도 에러내지 말고 "무시")
-#   - 프론트/게이트웨이가 device를 고정으로 보내는 경우(예: "0")가 있어서 400이 나면 불편함
-#   - 대신 로그로만 남기고, 실제 실행 device는 항상 FIXED_DEVICE를 사용한다.
-# =============================================================================
 def _ignore_device_override(params: Any) -> Optional[str]:
     """infer 요청 params.device가 들어오면 기록만 하고 무시"""
     if not isinstance(params, dict):
@@ -66,7 +54,6 @@ def _ignore_train_device_override(req: GTTrainRequest) -> Optional[str]:
     return str(dv)
 
 
-# ✅ GT roots (v2: gt_version 지원)
 GT_CURRENT_ROOT = Path(os.getenv("GT_CURRENT_ROOT", "/workspace/storage/GT/current")).resolve()
 GT_VERSIONS_ROOT = Path(os.getenv("GT_VERSIONS_ROOT", "/workspace/storage/GT_versions")).resolve()
 
@@ -88,11 +75,6 @@ logger = setup_logger(
     level=os.getenv("LOG_LEVEL", "INFO"),
 )
 
-# =============================================================================
-# ✅ IMPORTANT
-#   - 여기서 src.rtm.infer / train_gt import 될 때 내부에서 torch/cuda init 될 수 있음.
-#   - 위에서 CUDA_VISIBLE_DEVICES를 먼저 박았기 때문에 torch는 GPU "0만 존재"한다고 인식.
-# =============================================================================
 try:
     from src.rtm.infer import infer_batch as _infer_batch
 except Exception:  # pragma: no cover
@@ -393,13 +375,7 @@ def _coerce_infer_output(
 # GT helpers (v2: gt_version)
 # -----------------------------
 def _select_gt_root(req: GTTrainRequest) -> Path:
-    """
-    ✅ GT 루트 결정
-    우선순위:
-      1) req.gt.gt_version 있으면 GT_VERSIONS_ROOT/<gt_version>
-      2) req.dataset.img_root 기반 (images로 들어오면 parent 보정)
-      3) fallback: GT_CURRENT_ROOT
-    """
+
     if getattr(req, "gt", None) is not None and getattr(req.gt, "gt_version", None):
         return (GT_VERSIONS_ROOT / req.gt.gt_version).resolve()
 
@@ -429,9 +405,6 @@ def _select_gt_root(req: GTTrainRequest) -> Path:
 
 
 def _resolve_rtm_ann_paths(gt_root: Path) -> Tuple[Path, Path, Path]:
-    """
-    ✅ RTM annotation 위치 자동 탐색
-    """
     for dname in ("annotation", "annotations"):
         ann_dir = gt_root / dname
         tr = ann_dir / "train.json"
@@ -473,12 +446,11 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
     t0 = time.time()
 
     params = req.params or {}
-    requested_device = _ignore_device_override(params)  # ✅ 기록만
+    requested_device = _ignore_device_override(params)
 
     run_id = params.get("run_id")
     weight_dir = params.get("weight_dir")
 
-    # ✅ 실제 실행은 고정 device
     device = _fixed_device()
     conf = float(params.get("conf", DEFAULT_CONF))
     imgsz = int(params.get("imgsz", DEFAULT_IMGSZ))
@@ -495,7 +467,7 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
         rtm_config=(RTM_CONFIG or None),
         weight_dir=str(weight_dir) if weight_dir else None,
         device=device,
-        requested_device=requested_device,  # ✅ 들어온 값은 기록
+        requested_device=requested_device,
         device_policy="fixed",
         fixed_gpu_index=str(FIXED_GPU_INDEX),
         conf=conf,
@@ -642,7 +614,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
     job["started_at"] = time.time()
     _write_job(train_job_id, job)
 
-    requested_train_device = _ignore_train_device_override(req)  # ✅ 기록만
+    requested_train_device = _ignore_train_device_override(req)
 
     log_event(
         logger,
@@ -686,7 +658,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         out_dir = _project_model_dir(user_key, project_id) / version_tag
         save_path = out_dir / "best.pth"
 
-        train_device = _fixed_device()  # ✅ ALWAYS cuda:0
+        train_device = _fixed_device()
 
         resolved = {
             "config": str(cfg),
@@ -725,7 +697,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             out_ckpt=str(save_path),
             epochs=int(req.train.epochs),
             imgsz=int(req.train.imgsz),
-            device=train_device,  # ✅ FIXED
+            device=train_device,
             extra=extra,
         )
 
@@ -784,7 +756,6 @@ def train_gt(req: GTTrainRequest, background: BackgroundTasks):
     if not req.identity.job_id:
         raise HTTPException(status_code=400, detail="identity.job_id is required")
 
-    # ✅ 여기서도 그냥 기록만 (에러 X)
     requested_train_device = _ignore_train_device_override(req)
 
     if req.dataset is not None:

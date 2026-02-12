@@ -30,13 +30,6 @@ except Exception:  # pragma: no cover
 
 
 MODEL_NAME: ModelName = "rtdetr"
-
-# =============================================================================
-# ✅ GPU policy (Simple default = GPU 2)
-# - docker-compose GPU pinning이 안 먹는 환경에서도,
-#   ultralytics에 device="2"를 강제로 넣어서 GPU2를 사용하게 한다.
-# - 요청에서 device를 주더라도 "차단/기록"하지 않고 그냥 무시한다.
-# =============================================================================
 FIXED_GPU_INDEX = os.getenv("FIXED_GPU_INDEX", "2").strip() or "2"
 
 
@@ -220,11 +213,6 @@ def _infer_split_name(p: Optional[str], default: str) -> str:
     parts = s.split("/")
     return parts[-1] if parts else default
 
-
-# -----------------------------
-# data.yaml ensure (robust for ultralytics)
-# - 지금 너 상황처럼 split 폴더가 없을 수 있으니 train/val은 images로 둔다(최소 통과).
-# -----------------------------
 def _ensure_ultralytics_data_yaml(
     dataset_root: Path, *, split_train: str = "train", split_val: str = "val"
 ) -> Path:
@@ -270,7 +258,6 @@ def _ensure_ultralytics_data_yaml(
     else:
         nc = len(names)
 
-    # ✅ split이 없어도 통과하도록 images 폴더 자체를 사용
     train_rel = "images"
     val_rel = "images"
 
@@ -393,7 +380,7 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             source=image_paths,
             imgsz=imgsz,
             conf=conf,
-            device=device,  # ✅ GPU2 고정 주입
+            device=device,
             verbose=False,
         )
 
@@ -520,7 +507,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         out_dir = _project_model_dir(user_key, project_id) / version_tag
         save_path = out_dir / "best.pt"
 
-        train_device = _ultra_device()  # ✅ GPU2
+        train_device = _ultra_device()
 
         job = _read_job(train_job_id)
         job["resolved"] = {
@@ -564,7 +551,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             workers=int(extra.get("workers", 8)),
             seed=int(extra.get("seed", 42)),
             amp=bool(extra.get("amp", True)),
-            device=train_device,  # ✅ GPU2 고정 주입
+            device=train_device,
             verbose=False,
         )
 

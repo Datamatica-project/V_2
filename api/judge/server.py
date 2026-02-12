@@ -107,10 +107,6 @@ def _load_train_gt_cfg_with_path() -> Tuple[Dict[str, Any], Path]:
 
 
 def _train_timeout_sec(cfg: Dict[str, Any]) -> float:
-    """
-    train_gt.yaml 의 timeouts_sec.train_gt를 사용한다.
-    - 없으면 120초(큐잉 응답을 기다리기엔 충분, 학습 전체를 기다리진 않음)
-    """
     t = (cfg.get("timeouts_sec", {}) or {}).get("train_gt", None)
     try:
         if t is None:
@@ -149,11 +145,6 @@ GtRefType = Literal["current", "version"]
 
 
 class TrainGtRef(BaseModel):
-    """
-    GT를 '경로'로 받지 않고, 참조(ref)로 받는다.
-    - kind="current"  -> storage/GT/current 심볼릭 링크 사용
-    - kind="version"  -> storage/GT_versions/<gt_version> 사용
-    """
     kind: GtRefType = Field(default="current", description="current | version")
     gt_version: Optional[str] = Field(default=None, description="kind=version일 때 예: GT_20260210")
 
@@ -322,18 +313,12 @@ def _call_train(*, model: str, req: GTTrainRequest, timeout_s: float) -> Dict[st
     ep = m.get("endpoints", {}).get("train_gt", "/train/gt")
     url = f"{base}{ep}"
 
-    # 모델 컨테이너는 "큐잉 응답"만 빨리 주는게 정상. 그래도 import/torch init 대비 timeout은 넉넉히.
     r = requests.post(url, json=req.model_dump(by_alias=True), timeout=timeout_s)
     r.raise_for_status()
     return r.json()
 
 
 def _resolve_gt_root_from_cfg(*, cfg: Dict[str, Any], gt: TrainGtRef) -> str:
-    """
-    train_gt.yaml 기준으로 GT 루트를 결정한다.
-    - current: data.local.current_root (기본: /workspace/storage/GT/current)
-    - version: data.local.versions_root + / <gt_version> (기본: /workspace/storage/GT_versions/<gt_version>)
-    """
     data = cfg.get("data", {}) or {}
     local = (data.get("local", {}) or {})
 
@@ -352,23 +337,12 @@ def _resolve_gt_root_from_cfg(*, cfg: Dict[str, Any], gt: TrainGtRef) -> str:
 
 
 def _gt_payload_for_model(model: str, gt: TrainGtRef) -> Optional[Dict[str, Any]]:
-    """
-    모델 컨테이너 DTO(v2): req.gt.gt_version 을 쓰도록.
-    - version이면 {"gt_version": "..."} 제공
-    - current면 None (컨테이너가 GT_CURRENT_ROOT를 쓰거나 dataset으로 fallback)
-    """
     if gt.kind == "version" and gt.gt_version:
         return {"gt_version": str(gt.gt_version)}
     return None
 
 
 def _build_dataset_from_layout(*, model: str, gt_root: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
-    """
-    모델별 label_source / data_layout을 존중해서 dataset을 만든다.
-    - rtm: 보통 COCO annotations/{train,val}.json
-    - yolov11: YOLO labels/{train,val}
-    - rtdetr: COCO annotations/{train,val}.json (혹은 images split + annotation json)
-    """
     data = cfg.get("data", {}) or {}
     splits = (data.get("splits", {}) or {})
     split_train = str(splits.get("train", "train"))
@@ -385,8 +359,6 @@ def _build_dataset_from_layout(*, model: str, gt_root: str, cfg: Dict[str, Any])
 
     # RTM은 네 설정에서 label_source=coco, annotations_dir=annotations
     if model == "rtm" or label_source == "coco":
-        # annotations/{train,val}.json 우선 (annotation/도 호환은 모델 컨테이너에서 처리해도 되지만,
-        # judge는 일단 "annotations" 기준으로 보냄)
         return {
             "format": "coco",
             "img_root": gt_root,
@@ -439,9 +411,7 @@ def _build_gt_train_req_from_cfg(
     payload = {
         "identity": ident,
         "model": model,
-        # ✅ 핵심: 버전학습이면 gt.gt_version을 DTO에 같이 넣어준다.
         "gt": _gt_payload_for_model(model, gt),
-        # ✅ 하위호환/추적용: dataset도 같이 보냄(컨테이너가 gt를 우선해도 OK)
         "dataset": dataset,
         "train": train_params,
         "init_weight_type": "baseline",
