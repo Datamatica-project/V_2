@@ -1,6 +1,6 @@
 # configs/recipes/rtm/rtmdet_x_bdd100k_canon10_50e.py
 from __future__ import annotations
-
+from pathlib import Path
 RECIPE_ID = "rtm.rtmdet_x.bdd100k_canon10.50e"
 
 CLASSES = (
@@ -151,7 +151,7 @@ def build_config(overrides: dict) -> dict:
     # ---- evaluator (classwise=True 켜기) ----
     cfg["val_evaluator"] = dict(
         type="CocoMetric",
-        ann_file=f"{data_root}{val_ann}",
+        ann_file=str(Path(data_root) / val_ann),
         metric="bbox",
         classwise=True,
         proposal_nums=(100, 1, 10),

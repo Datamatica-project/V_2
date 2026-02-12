@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import time
 from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Literal
 
 import yaml
 import requests
@@ -17,6 +17,7 @@ from src.common.dto.dto import GTTrainRequest, GTTrainResponse
 
 from api.routers.gt_register import router as gt_router
 from api.routers.unlabeled_register import router as unlabeled_router
+
 
 def _env_path(name: str, default: str) -> Path:
     return Path(os.getenv(name, default)).resolve()
@@ -91,7 +92,7 @@ def _load_ensemble_cfg_with_path() -> Tuple[Dict[str, Any], Path]:
 
 
 # -----------------------------------------------------------------------------
-# train_gt.yaml loader (NEW)
+# train_gt.yaml loader
 # -----------------------------------------------------------------------------
 def _pick_train_gt_yaml_path() -> Path:
     p = CONFIGS_DIR / "train_gt.yaml"
@@ -103,6 +104,20 @@ def _pick_train_gt_yaml_path() -> Path:
 def _load_train_gt_cfg_with_path() -> Tuple[Dict[str, Any], Path]:
     p = _pick_train_gt_yaml_path()
     return _load_yaml(p), p
+
+
+def _train_timeout_sec(cfg: Dict[str, Any]) -> float:
+    """
+    train_gt.yaml 의 timeouts_sec.train_gt를 사용한다.
+    - 없으면 120초(큐잉 응답을 기다리기엔 충분, 학습 전체를 기다리진 않음)
+    """
+    t = (cfg.get("timeouts_sec", {}) or {}).get("train_gt", None)
+    try:
+        if t is None:
+            return 120.0
+        return float(t)
+    except Exception:
+        return 120.0
 
 
 # -----------------------------------------------------------------------------
@@ -128,14 +143,30 @@ class InferRunResponse(BaseModel):
 
 
 # -----------------------------------------------------------------------------
-# Train DTO (identity-only) (NEW)
+# Train DTO (identity + GT ref)
 # -----------------------------------------------------------------------------
-class TrainIdentityRequest(BaseModel):
+GtRefType = Literal["current", "version"]
+
+
+class TrainGtRef(BaseModel):
+    """
+    GT를 '경로'로 받지 않고, 참조(ref)로 받는다.
+    - kind="current"  -> storage/GT/current 심볼릭 링크 사용
+    - kind="version"  -> storage/GT_versions/<gt_version> 사용
+    """
+    kind: GtRefType = Field(default="current", description="current | version")
+    gt_version: Optional[str] = Field(default=None, description="kind=version일 때 예: GT_20260210")
+
+    model_config = {"extra": "ignore"}
+
+
+class TrainAllRequest(BaseModel):
     identity: Dict[str, Any] = Field(
         ...,
         description="최소: user_key, project_id, job_id",
         examples=[{"user_key": "user_001", "project_id": "project_demo", "job_id": "job_all_001"}],
     )
+    gt: TrainGtRef = Field(default_factory=TrainGtRef, description="GT 참조 정보")
 
     model_config = {"extra": "ignore"}
 
@@ -145,7 +176,7 @@ class TrainIdentityRequest(BaseModel):
 # -----------------------------------------------------------------------------
 app = FastAPI(
     title="V2 Judge (Control Plane)",
-    version="0.4.0",
+    version="0.4.2",
     openapi_tags=[
         {"name": "Health", "description": "서버 상태 확인(헬스체크)"},
         {"name": "Loop: Inference", "description": "3모델 추론 fan-out + 앙상블 루프"},
@@ -209,6 +240,7 @@ def debug_train_gt_config():
         "configs_dir": str(CONFIGS_DIR),
         "fallback_dir": str(FALLBACK_CONFIGS_DIR),
         "train_gt_cfg": cfg,
+        "resolved_timeouts_sec": {"train_gt": _train_timeout_sec(cfg)},
     }
 
 
@@ -280,7 +312,7 @@ def loop_infer_status(run_id: str = FPath(...)):
 # -----------------------------------------------------------------------------
 # Train – Judge Orchestration
 # -----------------------------------------------------------------------------
-def _call_train(model: str, req: GTTrainRequest) -> Dict[str, Any]:
+def _call_train(*, model: str, req: GTTrainRequest, timeout_s: float) -> Dict[str, Any]:
     cfg, _ = _load_models_cfg_with_path()
     m = cfg["models"].get(model)
     if not m:
@@ -290,42 +322,104 @@ def _call_train(model: str, req: GTTrainRequest) -> Dict[str, Any]:
     ep = m.get("endpoints", {}).get("train_gt", "/train/gt")
     url = f"{base}{ep}"
 
-    # timeout은 "트리거 요청" 왕복만
-    r = requests.post(url, json=req.model_dump(), timeout=10)
+    # 모델 컨테이너는 "큐잉 응답"만 빨리 주는게 정상. 그래도 import/torch init 대비 timeout은 넉넉히.
+    r = requests.post(url, json=req.model_dump(by_alias=True), timeout=timeout_s)
     r.raise_for_status()
     return r.json()
 
 
-def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict[str, Any]) -> GTTrainRequest:
+def _resolve_gt_root_from_cfg(*, cfg: Dict[str, Any], gt: TrainGtRef) -> str:
+    """
+    train_gt.yaml 기준으로 GT 루트를 결정한다.
+    - current: data.local.current_root (기본: /workspace/storage/GT/current)
+    - version: data.local.versions_root + / <gt_version> (기본: /workspace/storage/GT_versions/<gt_version>)
+    """
     data = cfg.get("data", {}) or {}
-    train = cfg.get("train", {}) or {}
-
     local = (data.get("local", {}) or {})
-    root = str(local.get("root", "/workspace/storage/GT"))
 
+    current_root = str(local.get("current_root", "/workspace/storage/GT/current"))
+    versions_root = str(local.get("versions_root", "/workspace/storage/GT_versions"))
+
+    if gt.kind == "current":
+        return current_root
+
+    if gt.kind == "version":
+        if not gt.gt_version:
+            raise HTTPException(status_code=422, detail="gt.gt_version is required when gt.kind='version'")
+        return str(Path(versions_root) / gt.gt_version)
+
+    raise HTTPException(status_code=422, detail=f"invalid gt.kind: {gt.kind}")
+
+
+def _gt_payload_for_model(model: str, gt: TrainGtRef) -> Optional[Dict[str, Any]]:
+    """
+    모델 컨테이너 DTO(v2): req.gt.gt_version 을 쓰도록.
+    - version이면 {"gt_version": "..."} 제공
+    - current면 None (컨테이너가 GT_CURRENT_ROOT를 쓰거나 dataset으로 fallback)
+    """
+    if gt.kind == "version" and gt.gt_version:
+        return {"gt_version": str(gt.gt_version)}
+    return None
+
+
+def _build_dataset_from_layout(*, model: str, gt_root: str, cfg: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    모델별 label_source / data_layout을 존중해서 dataset을 만든다.
+    - rtm: 보통 COCO annotations/{train,val}.json
+    - yolov11: YOLO labels/{train,val}
+    - rtdetr: COCO annotations/{train,val}.json (혹은 images split + annotation json)
+    """
+    data = cfg.get("data", {}) or {}
     splits = (data.get("splits", {}) or {})
     split_train = str(splits.get("train", "train"))
     split_val = str(splits.get("val", "val"))
-    if model in ("yolov11", "rtm"):
-        dataset = {
-            "format": "yolo",
-            "img_root": root,
-            "train": f"labels/{split_train}",
-            "val": f"labels/{split_val}",
-        }
-    else:
-        dataset = {
+
+    # models.yaml에서 layout 힌트 읽기(없으면 기본값)
+    models_cfg, _ = _load_models_cfg_with_path()
+    m = (models_cfg.get("models", {}) or {}).get(model, {}) or {}
+    label_source = str(m.get("label_source", "yolo")).lower()
+    layout = (m.get("data_layout", {}) or {})
+    images_dir = str(layout.get("images_dir") or "images")
+    labels_dir = str(layout.get("labels_dir") or "labels")
+    ann_dir = str(layout.get("annotations_dir") or "annotations")
+
+    # RTM은 네 설정에서 label_source=coco, annotations_dir=annotations
+    if model == "rtm" or label_source == "coco":
+        # annotations/{train,val}.json 우선 (annotation/도 호환은 모델 컨테이너에서 처리해도 되지만,
+        # judge는 일단 "annotations" 기준으로 보냄)
+        return {
             "format": "coco",
-            "img_root": root,
-            "train": f"images/{split_train}",
-            "val": f"images/{split_val}",
+            "img_root": gt_root,
+            "train": f"{ann_dir}/{split_train}.json",
+            "val": f"{ann_dir}/{split_val}.json",
         }
+
+    # 그 외는 yolo로 간주
+    return {
+        "format": "yolo",
+        "img_root": gt_root,
+        "train": f"{labels_dir}/{split_train}",
+        "val": f"{labels_dir}/{split_val}",
+    }
+
+
+def _build_gt_train_req_from_cfg(
+    *,
+    model: str,
+    ident: Dict[str, Any],
+    gt: TrainGtRef,
+    cfg: Dict[str, Any],
+) -> GTTrainRequest:
+    train = cfg.get("train", {}) or {}
+    gt_root = _resolve_gt_root_from_cfg(cfg=cfg, gt=gt)
+
+    dataset = _build_dataset_from_layout(model=model, gt_root=gt_root, cfg=cfg)
 
     train_params: Dict[str, Any] = {
         "epochs": int(train.get("epochs", 10)),
         "imgsz": int(train.get("imgsz", 640)),
         "batch": int(train.get("batch", 16)),
-        "device": "0",
+        "device": str(train.get("device", "0")),
         "extra": {
             "lr0": float(train.get("lr", 0.001)),
             "weight_decay": float(train.get("weight_decay", 0.0005)),
@@ -335,6 +429,7 @@ def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict
         },
     }
 
+    # rtm config inject (train_gt.yaml or env)
     if model == "rtm":
         rtm_block = cfg.get("rtm", {}) or {}
         rtm_config = rtm_block.get("config")
@@ -344,6 +439,9 @@ def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict
     payload = {
         "identity": ident,
         "model": model,
+        # ✅ 핵심: 버전학습이면 gt.gt_version을 DTO에 같이 넣어준다.
+        "gt": _gt_payload_for_model(model, gt),
+        # ✅ 하위호환/추적용: dataset도 같이 보냄(컨테이너가 gt를 우선해도 OK)
         "dataset": dataset,
         "train": train_params,
         "init_weight_type": "baseline",
@@ -355,39 +453,61 @@ def _build_gt_train_req_from_cfg(*, model: str, ident: Dict[str, Any], cfg: Dict
     "/loop/train/gt/run/{model}",
     response_model=GTTrainResponse,
     tags=["Loop: Train GT"],
-    summary="GT 학습 실행 (단일 모델, body는 identity만)",
+    summary="GT 학습 실행 (단일 모델, identity + gt_ref)",
 )
 def loop_train_gt_run(
     model: str = FPath(..., description="yolov11 | rtm | rtdetr"),
-    req: TrainIdentityRequest = Body(...),
+    req: TrainAllRequest = Body(...),
 ):
     if model not in ("yolov11", "rtm", "rtdetr"):
         raise HTTPException(status_code=400, detail=f"unknown model: {model}")
 
     cfg, _ = _load_train_gt_cfg_with_path()
-    gt_req = _build_gt_train_req_from_cfg(model=model, ident=req.identity, cfg=cfg)
-    return _call_train(model, gt_req)
+    timeout_s = _train_timeout_sec(cfg)
+
+    gt_req = _build_gt_train_req_from_cfg(model=model, ident=req.identity, gt=req.gt, cfg=cfg)
+
+    log_event(
+        logger,
+        "loop train_gt dispatch",
+        ctx=LogContext(job_id=req.identity.get("job_id"), stage="train_gt_dispatch", model="judge"),
+        target_model=model,
+        timeout_s=timeout_s,
+        gt_kind=req.gt.kind,
+        gt_version=req.gt.gt_version,
+        payload_has_gt=(gt_req.gt is not None),
+        payload_dataset=gt_req.dataset.model_dump() if gt_req.dataset else None,
+    )
+
+    return _call_train(model=model, req=gt_req, timeout_s=timeout_s)
 
 
 @app.post(
     "/loop/train/gt/run_all",
     tags=["Loop: Train GT"],
-    summary="GT 학습 실행 (3모델 전체, body는 identity만)",
+    summary="GT 학습 실행 (3모델 전체, identity + gt_ref)",
 )
-def loop_train_gt_run_all(req: TrainIdentityRequest = Body(...)):
+def loop_train_gt_run_all(req: TrainAllRequest = Body(...)):
     cfg, cfg_path = _load_train_gt_cfg_with_path()
+    timeout_s = _train_timeout_sec(cfg)
 
     results: Dict[str, Any] = {}
     errors: Dict[str, str] = {}
 
     for model in ("yolov11", "rtm", "rtdetr"):
         try:
-            gt_req = _build_gt_train_req_from_cfg(model=model, ident=req.identity, cfg=cfg)
-            results[model] = _call_train(model, gt_req)
+            gt_req = _build_gt_train_req_from_cfg(model=model, ident=req.identity, gt=req.gt, cfg=cfg)
+            results[model] = _call_train(model=model, req=gt_req, timeout_s=timeout_s)
         except Exception as e:
             errors[model] = f"{type(e).__name__}: {e}"
 
-    out: Dict[str, Any] = {"ok": not bool(errors), "train_gt_yaml_path": str(cfg_path), "results": results}
+    out: Dict[str, Any] = {
+        "ok": not bool(errors),
+        "train_gt_yaml_path": str(cfg_path),
+        "timeout_s": timeout_s,
+        "gt": {"kind": req.gt.kind, "gt_version": req.gt.gt_version},
+        "results": results,
+    }
     if errors:
         out["errors"] = errors
     return out

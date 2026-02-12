@@ -1,7 +1,5 @@
-mmengine==0.10.7
-mmdet==3.3.0
-
-numpy==2.2.6
+# --- core ---
+numpy<2
 opencv-python-headless
 pyyaml
 requests
@@ -13,5 +11,11 @@ pillow
 shapely
 networkx
 
+# --- api ---
 fastapi
 uvicorn[standard]
+
+# --- openmmlab (pip-installed, not mmcv) ---
+openmim
+mmengine==0.10.7
+mmdet==3.3.0

@@ -7,7 +7,19 @@ services:
       context: .
       dockerfile: yolov11.Dockerfile
     container_name: v2-yolov11
+
+    # ✅ Compose 스키마 요구대로 유지
     gpus: all
+
+    # ✅ GPU 0만 할당 (핵심)
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["0"]
+              capabilities: ["gpu"]
+
     ports:
       - "8020:8020"
     working_dir: /workspace
@@ -21,8 +33,12 @@ services:
       PYTHONPATH: /workspace
       WEIGHTS_ROOT: /weights
       ARTIFACTS_DIR: /artifacts
-      NVIDIA_VISIBLE_DEVICES: "0"
+
+      # (선택) 내부 device는 cuda:0로 쓰게 0 유지
+      DEVICE: "0"
+
       NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
@@ -43,7 +59,18 @@ services:
       context: .
       dockerfile: rtdetr.Dockerfile
     container_name: v2-rtdetr
+
     gpus: all
+
+    # ✅ GPU 1만 할당
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["1"]
+              capabilities: ["gpu"]
+
     ports:
       - "8021:8021"
     working_dir: /workspace
@@ -57,8 +84,12 @@ services:
       PYTHONPATH: /workspace
       WEIGHTS_ROOT: /weights
       ARTIFACTS_DIR: /artifacts
-      NVIDIA_VISIBLE_DEVICES: "1"
+
+      # 컨테이너 내부에서 보이는 GPU는 1개 → cuda:0
+      DEVICE: "0"
+
       NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin
@@ -79,7 +110,18 @@ services:
       context: .
       dockerfile: rtm.Dockerfile
     container_name: v2-rtm
+
     gpus: all
+
+    # ✅ GPU 2만 할당
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids: ["2"]
+              capabilities: ["gpu"]
+
     ports:
       - "8022:8022"
     working_dir: /workspace
@@ -93,9 +135,13 @@ services:
       PYTHONPATH: /workspace
       WEIGHTS_ROOT: /weights
       ARTIFACTS_DIR: /artifacts
-      RTM_CONFIG: /workspace/api/rtm_configs/rtmdet_config.py
-      NVIDIA_VISIBLE_DEVICES: "2"
+      RTM_CONFIG: /workspace/configs/recipes/rtm/rtmdet_x_bdd100k_canon10_50e.py
+
+      # 컨테이너 내부에서 보이는 GPU는 1개 → cuda:0
+      DEVICE: "cuda:0"
+
       NVIDIA_DRIVER_CAPABILITIES: "compute,utility"
+
       S3_ENDPOINT: http://minio:9000
       AWS_ACCESS_KEY_ID: minioadmin
       AWS_SECRET_ACCESS_KEY: minioadmin

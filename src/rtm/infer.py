@@ -1,6 +1,15 @@
 from __future__ import annotations
 
 import time
+def _apply_device_env(device: str):
+    # device: "cuda:2" / "2" / "cpu" 등 들어온다고 가정
+    if device in ("cpu", "CPU"):
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        return
+
+    d = str(device).replace("cuda:", "")
+    # "2" 또는 "0,1" 같은 형태만 남기기
+    os.environ["CUDA_VISIBLE_DEVICES"] = d
 from typing import Any, Dict, List
 
 from src.common.dto.dto import (

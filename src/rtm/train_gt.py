@@ -1,12 +1,22 @@
 from __future__ import annotations
 
+import importlib.util
 import os
-import time
+def _apply_device_env(device: str):
+    # device: "cuda:2" / "2" / "cpu" 등 들어온다고 가정
+    if device in ("cpu", "CPU"):
+        os.environ["CUDA_VISIBLE_DEVICES"] = ""
+        return
+
+    d = str(device).replace("cuda:", "")
+    # "2" 또는 "0,1" 같은 형태만 남기기
+    os.environ["CUDA_VISIBLE_DEVICES"] = d
 import shutil
+import subprocess
+import time
 from pathlib import Path
 from typing import Any, Dict
-import subprocess
-import importlib.util
+
 from mmengine.config import Config
 
 
@@ -69,7 +79,11 @@ def train_gt(
     extra: Dict[str, Any],
 ) -> Dict[str, Any]:
     """
-      나중에 정식 split을 쓰면 TODO 블록 제거하고, API에서 train_ann/val_ann을 명시 주입하도록 변경.
+    - recipe 파일(.py + RECIPE_ID + build_config)이면: build_config(overrides) -> cfg dict 생성 -> generated_config.py로 dump -> mim train
+    - 일반 mmdet config이면: --cfg-options 로 override 주입
+
+    NOTE:
+      imgsz는 현재 기본 파이프라인/레시피에 반영하지 않으면 효과가 없습니다.
     """
     t0 = time.time()
 
@@ -89,6 +103,7 @@ def train_gt(
 
     work_dir = out_ckpt_p.parent / f"_work_rtm_{int(time.time())}"
     work_dir.mkdir(parents=True, exist_ok=True)
+
     merged_extra = dict(extra or {})
 
     # TODO: later - train/val split이 준비되면 아래 기본값을 제거하고,
@@ -96,15 +111,20 @@ def train_gt(
     merged_extra.setdefault("data_root", str(gt_root_p))
     merged_extra.setdefault("max_epochs", int(epochs))
     merged_extra.setdefault("train_cfg.max_epochs", int(epochs))
-
-    merged_extra.setdefault("train_ann_file", "annotations/instances_test_30.json")
-    merged_extra.setdefault("val_ann_file", "annotations/instances_test_30.json")
+    merged_extra.setdefault("train_ann_file", "annotation/train.json")
+    merged_extra.setdefault("val_ann_file", "annotation/val.json")
     merged_extra.setdefault("train_img_prefix", "images/")
     merged_extra.setdefault("val_img_prefix", "images/")
 
     merged_extra.setdefault("batch_size", 4)
     merged_extra.setdefault("num_workers", 4)
     merged_extra.setdefault("amp", True)
+
+    # ✅ 레시피 모드에서 overrides로 받는 값들(핵심)
+    #    - 레시피가 load_from/work_dir를 overrides에서 꺼내 cfg에 반영할 수 있게 보장
+    merged_extra["load_from"] = str(init_ckpt_p)
+    merged_extra["work_dir"] = str(work_dir)
+
     config_path_for_train = config_path
     used_mode = "mmdet_config"
 
@@ -115,24 +135,36 @@ def train_gt(
             raise RuntimeError(f"recipe has no build_config: {config_path}")
 
         cfg_dict = recipe.build_config(merged_extra)
+        cfg_dict.setdefault("default_scope", "mmdet")
 
         gen_cfg_path = work_dir / "generated_config.py"
         Config(cfg_dict).dump(str(gen_cfg_path))
         config_path_for_train = gen_cfg_path
 
-        cfg_opts = []
+        # 레시피 모드에서는 cfg_dict에 load_from/work_dir가 들어가도록 했으므로,
+        # 여기서 또 --cfg-options load_from=... 중복 주입은 피한다.
+        cfg_opts: list[str] = []
     else:
+        # 일반 config 모드는 --cfg-options로 주입
         cfg_opts = _cfg_options(merged_extra)
 
+        # (안전장치) mmdet config에서 load_from를 확실히 override
+        # merged_extra에 이미 넣어둔 load_from가 cfg_opts에 포함되지만,
+        # 혹시 extra에서 load_from=None 등으로 지워질 가능성을 막기 위해 마지막에 한 번 더 보장
+        cfg_opts = [opt for opt in cfg_opts if not opt.startswith("load_from=")]
+        cfg_opts.append(f"load_from={str(init_ckpt_p)}")
+
     cmd = [
-        "python",
-        "-m",
-        "mmdetection.tools.train",
+        "mim",
+        "train",
+        "mmdet",
         str(config_path_for_train),
         "--work-dir",
         str(work_dir),
-        "--load-from",
-        str(init_ckpt_p),
+        "--launcher",
+        "none",
+        "-G",
+        "1",  # single GPU inside container
     ]
 
     if cfg_opts:
@@ -153,7 +185,11 @@ def train_gt(
 
     if proc.returncode != 0:
         raise RuntimeError(
-            f"RTMDet train failed\nMODE: {used_mode}\nCMD: {' '.join(cmd)}\nSTDOUT:\n{proc.stdout}\nSTDERR:\n{proc.stderr}"
+            "RTMDet train failed\n"
+            f"MODE: {used_mode}\n"
+            f"CMD: {' '.join(cmd)}\n"
+            f"STDOUT:\n{proc.stdout}\n"
+            f"STDERR:\n{proc.stderr}"
         )
 
     latest_ckpt = work_dir / "latest.pth"

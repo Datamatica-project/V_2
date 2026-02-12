@@ -1,9 +1,9 @@
 # V_2/src/common/dto/dto.py
 from __future__ import annotations
 
-from typing import Any, Dict, List, Literal, Optional, Union
+from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 # -----------------------------------------------------------------------------
@@ -327,11 +327,28 @@ class JudgeAttributionRecord(BaseModel):
 # -----------------------------------------------------------------------------
 # GT Training DTOs (policy-aligned)
 # -----------------------------------------------------------------------------
+class GTVersionRef(BaseModel):
+    """
+    GT 버전 선택용 참조 (경로 대신 버전 키만 전달)
+    - 예: GT_1, GT_20260210_001
+    - 서버는 versions_root/<gt_version>을 실제 루트로 해석한다.
+    """
+
+    gt_version: str = Field(
+        ...,
+        description="GT 버전 디렉토리명 (예: GT_1). 서버가 versions_root 아래에서 해석",
+        examples=["GT_1"],
+    )
+
+    model_config = {"extra": "ignore"}
+
+
 class GTDatasetSpec(BaseModel):
     """
     GT 학습 데이터셋 명세
     - 포맷/경로만 명시 (학습 파이프라인 구현은 모델 컨테이너 책임)
     """
+
     format: Literal["coco", "yolo"] = Field(
         ...,
         description="GT 데이터셋 포맷 (coco=json / yolo=labels txt)",
@@ -378,6 +395,7 @@ class GTTrainParams(BaseModel):
     """
     공통 학습 파라미터 (모델별 추가 파라미터는 extra로)
     """
+
     epochs: int = Field(30, ge=1, le=100000, description="학습 epoch 수", examples=[30])
     imgsz: int = Field(640, ge=32, le=4096, description="입력 해상도(imgsz)", examples=[640])
     batch: int = Field(8, ge=1, le=4096, description="학습 배치 크기", examples=[8])
@@ -392,10 +410,17 @@ class GTTrainParams(BaseModel):
 
     model_config = {"extra": "ignore"}
 
+
 class GTTrainRequest(BaseModel):
     """
     사용자 GT 학습 트리거 요청(모델별 공통 계약)
+
+    ✅ v2 확장:
+    - 경로 대신 gt.gt_version (예: "GT_1")만 주면 서버가 versions_root/<GT_1>로 dataset을 구성한다.
+    - 하위호환: dataset(경로 직접 지정) 방식도 그대로 허용.
+    - 둘 중 하나(gt 또는 dataset)는 반드시 제공되어야 한다.
     """
+
     identity: RunIdentity = Field(
         ...,
         description="요청 식별자(유저/프로젝트/job_id 등). 멀티테넌시/버전관리/로그 스코프에 사용",
@@ -407,9 +432,17 @@ class GTTrainRequest(BaseModel):
         examples=["rtm"],
     )
 
-    dataset: GTDatasetSpec = Field(
-        ...,
-        description="GT 데이터셋 위치/포맷",
+    # ✅ NEW: 버전키로 GT 선택 (경로 노출 없이)
+    gt: Optional[GTVersionRef] = Field(
+        None,
+        description="(옵션) GT 버전 선택. 제공 시 서버는 versions_root/<gt_version>을 GT 루트로 사용",
+    )
+
+    # ✅ 기존 방식(하위호환): 경로 직접 지정
+    dataset: Optional[GTDatasetSpec] = Field(
+        None,
+        description="(옵션) GT 데이터셋 위치/포맷을 직접 지정(레거시/고급). "
+        "gt가 제공되면 서버는 dataset을 무시하거나 보완할 수 있음.",
     )
 
     train: GTTrainParams = Field(
@@ -429,12 +462,28 @@ class GTTrainRequest(BaseModel):
         examples=["/weights/_base/rtm/base_bdd100k.pth"],
     )
 
+    # ✅ 필수조건: gt 또는 dataset 둘 중 하나는 있어야 함
+    @model_validator(mode="after")
+    def _validate_gt_or_dataset(self) -> "GTTrainRequest":
+        if self.gt is None and self.dataset is None:
+            raise ValueError("either 'gt' (gt_version) or 'dataset' must be provided")
+        return self
+
     model_config = {
         "extra": "ignore",
         "json_schema_extra": {
             "examples": [
+                # ✅ 권장: 버전키만 보내는 방식
                 {
                     "identity": {"user_key": "user_001", "project_id": "project_demo", "job_id": "gt_0001"},
+                    "model": "yolov11",
+                    "gt": {"gt_version": "GT_1"},
+                    "train": {"epochs": 30, "imgsz": 640, "batch": 8, "device": "0", "extra": {"lr": 0.0005}},
+                    "init_weight_type": "baseline",
+                },
+                # ✅ 하위호환: 경로 직접 지정 방식
+                {
+                    "identity": {"user_key": "user_001", "project_id": "project_demo", "job_id": "gt_0002"},
                     "model": "rtm",
                     "dataset": {
                         "format": "yolo",
@@ -446,11 +495,10 @@ class GTTrainRequest(BaseModel):
                     "train": {"epochs": 30, "imgsz": 640, "batch": 8, "device": "0", "extra": {"lr": 0.0005}},
                     "init_weight_type": "baseline",
                     "baseline_weight_path": "/weights/_base/rtm/base_bdd100k.pth",
-                }
+                },
             ]
         },
     }
-
 
 
 class GTTrainResponse(BaseModel):
@@ -535,9 +583,9 @@ class TrainGTRequest(BaseModel):
     model: ModelName
     created_at: Optional[str] = None
 
-    gt_source: GTSource
-    train: TrainParams
-    output: OutputParams
+    gt_source: "GTSource"
+    train: "TrainParams"
+    output: "OutputParams"
 
     job: Dict[str, Any] = Field(default_factory=dict)
     tracking: Dict[str, Any] = Field(default_factory=dict)

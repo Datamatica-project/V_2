@@ -1,23 +1,37 @@
 # configs/train_gt.yaml
+
 job:
   id_prefix: "job"
   registry_dir: "./logs/train"
   artifacts_root: "./storage/artifacts"
 
+# -----------------------------------------------------------------------------
+# Dataset source
+# -----------------------------------------------------------------------------
 data:
   source_type: "GT"
   mode: "local"
+
   s3:
     bucket: "v2-datasets"
     prefix: "GT/current"
+
   local:
-    root: "/workspace/storage/datasets/test_gt"
+    current_root: "/workspace/storage/GT/current"
+    versions_root: "/workspace/storage/GT_versions"
+
+    # 공통 레이아웃
     images_subdir: "images"
-    labels_subdir: "labels"
+    labels_subdir: "labels"           # YOLO용
+    annotations_subdir: "annotations" # RTM(COCO)용
+
   splits:
     train: "train"
     val: "val"
 
+# -----------------------------------------------------------------------------
+# Common training params (YOLOv11 / RT-DETR 공통)
+# -----------------------------------------------------------------------------
 train:
   epochs: 10
   imgsz: 640
@@ -27,25 +41,50 @@ train:
   workers: 8
   seed: 42
   amp: true
+  device_by_model:
+    yolov11: "cuda:0"
+    rtdetr: "cuda:1"
 
-yolox:
-  exp_file: "exps/custom/yolox_x_canon9.py"
+  # (선택) 매핑이 없을 때 fallback
+  default_device: "cuda:0"
+
+# -----------------------------------------------------------------------------
+# RTM-specific training params
+# (실제 사용 여부는 rtm train runner가 결정)
+# -----------------------------------------------------------------------------
+rtm:
+  # ✅ NEW: RTM 학습 GPU 선택 (runner에 device로 주입)
+  device: "cuda:2"
+
   devices: 1
   batch: 8
   fp16: true
-  occupy: true
-  ckpt: "/weights/yolox_x.pth"
 
+  # RTM 학습 설정 파일
+  config_file: "configs/rtm/custom_rtm_canon9.py"
+
+  # /weights/_base/rtm/base_bdd100k.(pth|pt|ckpt)
+  pretrained: "/weights/_base/rtm/base_bdd100k.pth"
+
+  work_dir: "/artifacts/rtm_train"
+
+# -----------------------------------------------------------------------------
+# Output / weight policy
+# -----------------------------------------------------------------------------
 output:
   weights_dir_in_container: "/weights"
   naming: "{model}/gt/{job_id}/best.pt"
   also_save_last: true
 
+# -----------------------------------------------------------------------------
+# Tracking / artifacts
+# -----------------------------------------------------------------------------
 tracking:
   mlflow:
     enabled: true
     tracking_uri: "http://mlflow:5000"
     experiment_name: "V2_GT_Training"
+
   s3_artifacts:
     enabled: true
     bucket: "v2-artifacts"

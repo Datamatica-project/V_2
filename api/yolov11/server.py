@@ -1,3 +1,4 @@
+# api/yolov11/server.py
 from __future__ import annotations
 
 import json
@@ -8,17 +9,17 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import yaml
 from fastapi import BackgroundTasks, FastAPI, HTTPException
 
-# ✅ SSOT import 규칙 (api/* 는 src/* 만 import)
 from src.common.dto.dto import (
-    InferBatchRequest,
-    ModelName,
     Detection,
-    InferItemResult,
-    ModelPredResponse,
     GTTrainRequest,
     GTTrainResponse,
+    InferBatchRequest,
+    InferItemResult,
+    ModelName,
+    ModelPredResponse,
 )
 from src.common.utils.logging import LogContext, log_event, setup_logger
 
@@ -33,14 +34,28 @@ except Exception:  # pragma: no cover
 
 MODEL_NAME: ModelName = "yolov11"
 
+# =============================================================================
+# ✅ GPU policy (Simple default = GPU 1)
+# - 요청에서 device가 와도 차단/기록하지 않고 무시.
+# - ultralytics 호출에 device="1"를 항상 주입해서 GPU1을 사용하게 한다.
+# =============================================================================
+FIXED_GPU_INDEX = os.getenv("FIXED_GPU_INDEX", "1").strip() or "1"
+
+
+def _ultra_device() -> str:
+    return str(FIXED_GPU_INDEX)
+
+
+GT_CURRENT_ROOT = Path(os.getenv("GT_CURRENT_ROOT", "/workspace/storage/GT/current")).resolve()
+GT_VERSIONS_ROOT = Path(os.getenv("GT_VERSIONS_ROOT", "/workspace/storage/GT_versions")).resolve()
+
 DEFAULT_REGISTRY_ROOT = os.getenv("MODEL_REGISTRY_ROOT", "/workspace/logs/model_train")
-REGISTRY_DIR = Path(DEFAULT_REGISTRY_ROOT) / str(MODEL_NAME)
+REGISTRY_DIR = (Path(DEFAULT_REGISTRY_ROOT) / str(MODEL_NAME)).resolve()
 REGISTRY_DIR.mkdir(parents=True, exist_ok=True)
 
-WEIGHTS_ROOT = Path(os.getenv("WEIGHTS_ROOT", "/weights"))
+WEIGHTS_ROOT = Path(os.getenv("WEIGHTS_ROOT", "/weights")).resolve()
 WEIGHTS_ROOT.mkdir(parents=True, exist_ok=True)
 
-DEFAULT_DEVICE = os.getenv("DEVICE", "0")  # "0" / "cuda:0" / "cpu"
 DEFAULT_IMGSZ = int(os.getenv("DEFAULT_IMGSZ", "640"))
 DEFAULT_CONF = float(os.getenv("DEFAULT_CONF", "0.25"))
 DEFAULT_IOU = float(os.getenv("DEFAULT_IOU", "0.45"))
@@ -51,7 +66,7 @@ logger = setup_logger(
     level=os.getenv("LOG_LEVEL", "INFO"),
 )
 
-app = FastAPI(title=f"{MODEL_NAME}-api", version="0.4.0")
+app = FastAPI(title=f"{MODEL_NAME}-api", version="0.4.5")
 
 log_event(
     logger,
@@ -59,7 +74,10 @@ log_event(
     ctx=LogContext(model=str(MODEL_NAME), stage="boot"),
     registry_dir=str(REGISTRY_DIR),
     weights_root=str(WEIGHTS_ROOT),
-    device=DEFAULT_DEVICE,
+    gt_current_root=str(GT_CURRENT_ROOT),
+    gt_versions_root=str(GT_VERSIONS_ROOT),
+    device_policy="default_fixed",
+    fixed_gpu_index=str(FIXED_GPU_INDEX),
     default_imgsz=DEFAULT_IMGSZ,
     default_conf=DEFAULT_CONF,
     default_iou=DEFAULT_IOU,
@@ -89,10 +107,9 @@ def _read_job(train_job_id: str) -> Dict[str, Any]:
 
 
 # -----------------------------
-# Weight policy helpers (V2)
+# Weights helpers
 # -----------------------------
 def _project_model_dir(user_key: str, project_id: str) -> Path:
-    # /weights/projects/{user}/{project}/{model}
     return (WEIGHTS_ROOT / "projects" / str(user_key) / str(project_id) / str(MODEL_NAME)).resolve()
 
 
@@ -107,40 +124,35 @@ def _pick_latest_weight(weights_dir: Path) -> Optional[Path]:
 
 
 def _pick_latest_project_weight(user_key: str, project_id: str) -> Optional[Path]:
-    """
-    projects/{user}/{project}/{model}/ 아래에서 최신 .pt를 찾음 (v### 하위 포함)
-    """
     base = _project_model_dir(user_key, project_id)
     return _pick_latest_weight(base)
 
 
-def _next_project_version(user_key: str, project_id: str) -> int:
-    """
-    projects/{user}/{project}/{model}/v### 폴더 기준으로 다음 버전 계산 (v001부터)
-    """
-    base = _project_model_dir(user_key, project_id)
+def _list_version_dirs(base: Path) -> List[Path]:
     if not base.exists():
-        return 1
-
-    max_v = 0
+        return []
+    vers: List[Tuple[int, Path]] = []
     for p in base.iterdir():
         if p.is_dir() and p.name.startswith("v") and len(p.name) == 4 and p.name[1:].isdigit():
-            max_v = max(max_v, int(p.name[1:]))
-    return max_v + 1
+            vers.append((int(p.name[1:]), p))
+    vers.sort(key=lambda x: x[0], reverse=True)
+    return [p for _, p in vers]
+
+
+def _next_project_version(user_key: str, project_id: str) -> int:
+    base = _project_model_dir(user_key, project_id)
+    vdirs = _list_version_dirs(base)
+    if not vdirs:
+        return 1
+    return int(vdirs[0].name[1:]) + 1
 
 
 def _base_bdd100k_weight() -> Path:
-    """
-    v1 init: /weights/_base/{model}/base_bdd100k.*
-    """
     base_dir = (WEIGHTS_ROOT / "_base" / str(MODEL_NAME)).resolve()
     if not base_dir.exists():
         raise FileNotFoundError(f"base dir not found: {base_dir}")
 
-    cands: List[Path] = []
-    for ext in ("pt",):
-        cands += list(base_dir.glob(f"base_bdd100k*.{ext}"))
-    cands = [p for p in cands if p.is_file()]
+    cands = [p for p in base_dir.glob("base_bdd100k*.pt") if p.is_file()]
     if not cands:
         raise FileNotFoundError(f"base_bdd100k*.pt not found under: {base_dir}")
 
@@ -149,13 +161,6 @@ def _base_bdd100k_weight() -> Path:
 
 
 def _resolve_init_for_train(req: GTTrainRequest) -> Path:
-    """
-    정책:
-      - req.baseline_weight_path 있으면 그걸 사용 (존재해야 함)
-      - 없으면:
-          - projects/{user}/{project}/{model}/ 에 기존 버전이 있으면 "직전 버전(latest)"에서 시작 (v2~)
-          - 없으면: /weights/_base/{model}/base_bdd100k.* 에서 시작 (v1)
-    """
     if req.baseline_weight_path:
         p = Path(req.baseline_weight_path)
         if not p.is_absolute():
@@ -175,25 +180,12 @@ def _resolve_init_for_train(req: GTTrainRequest) -> Path:
 
 
 def _resolve_weight(requested: Optional[str], weight_dir: Optional[str]) -> Tuple[Optional[Path], Optional[str]]:
-    """
-    infer용 weight resolver (정책 반영)
-
-    우선순위:
-      1) requested (weight/weight_path) 지정 시: 그 경로 사용 (상대면 WEIGHTS_ROOT 기준)
-      2) weight_dir 지정 시: WEIGHTS_ROOT/weight_dir 범위에서만 latest pick
-      3) (호환 fallback) 없으면 WEIGHTS_ROOT 전체 latest
-
-    returns:
-      (weight_path, weight_dir_used)
-    """
-    # 1) 명시 weight
     if requested:
         p = Path(str(requested))
         if not p.is_absolute():
             p = (WEIGHTS_ROOT / p).resolve()
         return (p if p.exists() else None), (str(weight_dir) if weight_dir else None)
 
-    # 2) 스코프 weight_dir
     if weight_dir:
         scoped = Path(str(weight_dir))
         if not scoped.is_absolute():
@@ -201,54 +193,114 @@ def _resolve_weight(requested: Optional[str], weight_dir: Optional[str]) -> Tupl
         w = _pick_latest_weight(scoped)
         return w, str(weight_dir)
 
-    # 3) fallback
     return _pick_latest_weight(WEIGHTS_ROOT), None
 
 
 # -----------------------------
-# Dataset YAML auto writer (optional)
+# GT helpers
 # -----------------------------
-def _ensure_ultralytics_data_yaml(dataset_root: Path) -> Path:
-    """
-    ultralytics는 data.yaml이 필요하므로,
-    dataset_root 아래 data.yaml 없으면 자동 생성해줌 (MVP 편의)
+def _select_dataset_root(req: GTTrainRequest) -> Path:
+    if getattr(req, "gt", None) is not None and getattr(req.gt, "gt_version", None):
+        return (GT_VERSIONS_ROOT / req.gt.gt_version).resolve()
 
-    ⚠️ 주의:
-    - 여기서는 req.dataset.img_root를 "dataset root"로 해석한다.
-      (ultralytics data.yaml의 path 기준)
-    """
+    if req.dataset is not None and req.dataset.img_root:
+        img_root = Path(req.dataset.img_root).resolve()
+
+        if (img_root / "images").exists() or (img_root / "labels").exists() or (img_root / "annotations").exists():
+            return img_root
+
+        parent = img_root.parent
+        if (parent / "images").exists() or (parent / "labels").exists() or (parent / "annotations").exists():
+            return parent
+
+        return img_root
+
+    return GT_CURRENT_ROOT
+
+
+def _infer_split_name(p: Optional[str], default: str) -> str:
+    if not p:
+        return default
+    s = str(p).replace("\\", "/").rstrip("/")
+    parts = s.split("/")
+    return parts[-1] if parts else default
+
+
+def _ensure_ultralytics_data_yaml(dataset_root: Path, *, split_train: str = "train", split_val: str = "val") -> Path:
     data_yaml = dataset_root / "data.yaml"
+
+    raw: Dict[str, Any] = {}
     if data_yaml.exists():
-        return data_yaml
+        try:
+            loaded = yaml.safe_load(data_yaml.read_text(encoding="utf-8")) or {}
+            if isinstance(loaded, dict):
+                raw = loaded
+        except Exception:
+            raw = {}
+
+    names: Any = raw.get("names", None)
+
+    int_keys = sorted([k for k in raw.keys() if isinstance(k, int)])
+    if (names is None) and int_keys:
+        names = [str(raw[k]) for k in int_keys]
+        for k in int_keys:
+            raw.pop(k, None)
+
+    if isinstance(names, dict):
+        try:
+            names = [str(names[k]) for k in sorted(names.keys())]
+        except Exception:
+            names = None
+
+    env_names = os.getenv("CLASS_NAMES", "").strip()
+    if env_names:
+        names = [x.strip() for x in env_names.split(",") if x.strip()]
+
+    if not isinstance(names, list) or not names:
+        names = ["cls0"]
+
+    env_nc = os.getenv("NC", "").strip()
+    if env_nc.isdigit() and int(env_nc) > 0:
+        nc = int(env_nc)
+        if len(names) > nc:
+            names = names[:nc]
+        elif len(names) < nc:
+            names = names + [f"cls{i}" for i in range(len(names), nc)]
+    else:
+        nc = len(names)
+
+    train_rel = f"images"
+    if (dataset_root / "images").exists():
+        val_rel = f"images"
+    elif (dataset_root / "images" / "val").exists():
+        val_rel = "images"
+    elif (dataset_root / "images" / "test").exists():
+        val_rel = "images"
+    else:
+        val_rel = "images"
 
     payload: Dict[str, Any] = {
         "path": str(dataset_root),
-        "train": "images/train",
-        "val": "images/val" if (dataset_root / "images" / "val").exists() else "images/test",
+        "train": train_rel,
+        "val": val_rel,
+        "nc": nc,
+        "names": names,
     }
 
-    nc = int(os.getenv("NC", "0"))
-    names = os.getenv("CLASS_NAMES", "").strip()
-    if nc > 0:
-        payload["nc"] = nc
-    if names:
-        payload["names"] = [x.strip() for x in names.split(",") if x.strip()]
-
-    lines: List[str] = []
-    for k, v in payload.items():
-        if isinstance(v, list):
-            lines.append(f"{k}: {json.dumps(v)}")
-        else:
-            lines.append(f"{k}: {v}")
-    data_yaml.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    data_yaml.parent.mkdir(parents=True, exist_ok=True)
+    data_yaml.write_text(yaml.safe_dump(payload, sort_keys=False, allow_unicode=True), encoding="utf-8")
 
     log_event(
         logger,
-        "data.yaml created",
+        "data.yaml ensured",
         ctx=LogContext(stage="train_gt", model=str(MODEL_NAME)),
         data_yaml=str(data_yaml),
-        nc=payload.get("nc"),
-        has_names=("names" in payload),
+        nc=nc,
+        has_names=True,
+        split_train=split_train,
+        split_val=split_val,
+        train=train_rel,
+        val=val_rel,
     )
     return data_yaml
 
@@ -258,7 +310,20 @@ def _empty_results(req: InferBatchRequest) -> List[InferItemResult]:
 
 
 # -----------------------------
-# Core: Inference (표준 ModelPredResponse)
+# HTTP endpoints
+# -----------------------------
+@app.get("/health")
+def health():
+    return {
+        "ok": True,
+        "model": str(MODEL_NAME),
+        "device_policy": "default_fixed",
+        "fixed_gpu_index": str(FIXED_GPU_INDEX),
+    }
+
+
+# -----------------------------
+# Inference (DEFAULT GPU1)
 # -----------------------------
 @app.post("/infer")
 def infer(req: InferBatchRequest) -> Dict[str, Any]:
@@ -266,18 +331,12 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
 
     params = req.params or {}
     run_id = params.get("run_id")
-    weight_dir = params.get("weight_dir")  # ✅ gateway 스코프
+    weight_dir = params.get("weight_dir")
     ctx = LogContext(run_id=str(run_id) if run_id else None, stage="infer", model=str(MODEL_NAME))
 
     if YOLO is None:
         elapsed_ms = int((time.time() - t0) * 1000)
-        log_event(
-            logger,
-            "infer unavailable (no ultralytics YOLO)",
-            ctx=ctx,
-            elapsed_ms=elapsed_ms,
-            level="ERROR",
-        )
+        log_event(logger, "infer unavailable (no ultralytics YOLO)", ctx=ctx, elapsed_ms=elapsed_ms, level="ERROR")
         resp = ModelPredResponse(
             model=MODEL_NAME,
             batch_id=req.batch_id,
@@ -294,7 +353,8 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
     imgsz = int(params.get("imgsz", DEFAULT_IMGSZ))
     conf = float(params.get("conf", DEFAULT_CONF))
     iou = float(params.get("iou", DEFAULT_IOU))
-    device = str(params.get("device", DEFAULT_DEVICE))
+
+    device = _ultra_device()  # ✅ 항상 GPU1
 
     log_event(
         logger,
@@ -306,6 +366,8 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
         conf=conf,
         iou=iou,
         device=device,
+        device_policy="default_fixed",
+        fixed_gpu_index=str(FIXED_GPU_INDEX),
         weight_req=str(weight_req) if weight_req else None,
         weight_dir=str(weight_dir) if weight_dir else None,
     )
@@ -340,27 +402,16 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
 
     try:
         model = YOLO(str(weight_path))
-
         image_paths = [it.image_path for it in req.items]
+
         results_ultra = model.predict(
             source=image_paths,
             imgsz=imgsz,
             conf=conf,
             iou=iou,
-            device=device,
+            device=device,  # ✅ GPU1 고정 주입
             verbose=False,
         )
-
-        if len(results_ultra) != len(req.items):
-            log_event(
-                logger,
-                "infer results length mismatch",
-                ctx=ctx,
-                batch_id=req.batch_id,
-                expected=len(req.items),
-                got=len(results_ultra),
-                level="WARNING",
-            )
 
         results: List[InferItemResult] = []
         n = min(len(req.items), len(results_ultra))
@@ -372,13 +423,7 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
                 confs = r.boxes.conf.cpu().numpy()
                 clss = r.boxes.cls.cpu().numpy()
                 for (x1, y1, x2, y2), c, k in zip(xyxy, confs, clss):
-                    dets.append(
-                        Detection(
-                            cls=int(k),
-                            conf=float(c),
-                            xyxy=[float(x1), float(y1), float(x2), float(y2)],
-                        )
-                    )
+                    dets.append(Detection(cls=int(k), conf=float(c), xyxy=[float(x1), float(y1), float(x2), float(y2)]))
             results.append(InferItemResult(image_id=it.image_id, detections=dets))
 
         for it in req.items[n:]:
@@ -395,6 +440,8 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             elapsed_ms=elapsed_ms,
             n_results=len(results),
             weight_dir_used=weight_dir_used,
+            device=device,
+            device_policy="default_fixed",
         )
 
         resp = ModelPredResponse(
@@ -405,17 +452,7 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             elapsed_ms=elapsed_ms,
             weight_used=str(weight_path),
             results=results,
-            raw={
-                "meta": {
-                    "weight_dir_used": weight_dir_used,
-                },
-                "ultralytics": {
-                    "imgsz": imgsz,
-                    "conf": conf,
-                    "iou": iou,
-                    "device": device,
-                },
-            },
+            raw={"meta": {"weight_dir_used": weight_dir_used, "device_policy": "default_fixed", "device": device}},
         )
         return resp.model_dump()
 
@@ -430,6 +467,8 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
                 "elapsed_ms": elapsed_ms,
                 "error": f"{type(e).__name__}: {e}",
                 "weight_dir_used": weight_dir_used,
+                "device": device,
+                "device_policy": "default_fixed",
             },
         )
         resp = ModelPredResponse(
@@ -440,13 +479,13 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             elapsed_ms=elapsed_ms,
             weight_used=str(weight_path),
             results=_empty_results(req),
-            raw={"meta": {"weight_dir_used": weight_dir_used}},
+            raw={"meta": {"weight_dir_used": weight_dir_used, "device_policy": "default_fixed", "device": device}},
         )
         return resp.model_dump()
 
 
 # -----------------------------
-# Core: Train (policy-aligned via GTTrainRequest/Response)
+# Train (DEFAULT GPU1)
 # -----------------------------
 def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
     ident = req.identity
@@ -464,27 +503,29 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         train_job_id=train_job_id,
         user_key=ident.user_key,
         project_id=ident.project_id,
-        dataset=req.dataset.model_dump(),
+        gt=getattr(req, "gt", None).model_dump() if getattr(req, "gt", None) else None,
+        dataset=req.dataset.model_dump() if req.dataset else None,
         train=req.train.model_dump(),
+        device_policy="default_fixed",
+        fixed_gpu_index=str(FIXED_GPU_INDEX),
     )
 
     try:
         if YOLO is None:
             raise RuntimeError("ultralytics YOLO not available in this container")
-
         if not ident.job_id:
             raise ValueError("identity.job_id is required")
 
-        dataset_root = Path(req.dataset.img_root).resolve()
+        dataset_root = _select_dataset_root(req)
         if not dataset_root.exists():
-            raise FileNotFoundError(f"dataset.img_root not found: {dataset_root}")
+            raise FileNotFoundError(f"resolved dataset_root not found: {dataset_root}")
 
-        data_yaml = _ensure_ultralytics_data_yaml(dataset_root)
+        split_train = _infer_split_name(req.dataset.train if req.dataset else None, "train")
+        split_val = _infer_split_name(req.dataset.val if req.dataset else None, "val")
 
-        # ✅ init weight: v1=base_bdd100k, v2~=prev
+        data_yaml = _ensure_ultralytics_data_yaml(dataset_root, split_train=split_train, split_val=split_val)
         init_weight = _resolve_init_for_train(req)
 
-        # ✅ output weight: /weights/projects/{user}/{project}/{model}/v###/best.pt
         user_key = str(ident.user_key)
         project_id = str(ident.project_id)
         next_v = _next_project_version(user_key, project_id)
@@ -492,33 +533,59 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         out_dir = _project_model_dir(user_key, project_id) / version_tag
         save_path = out_dir / "best.pt"
 
+        train_device = _ultra_device()  # ✅ 항상 GPU1
+
         job = _read_job(train_job_id)
         job["resolved"] = {
+            "dataset_root": str(dataset_root),
+            "split_train": split_train,
+            "split_val": split_val,
+            "gt": getattr(req, "gt", None).model_dump() if getattr(req, "gt", None) else None,
             "init_weight": str(init_weight),
             "data_yaml": str(data_yaml),
             "save_path": str(save_path),
             "version": version_tag,
+            "device": train_device,
+            "device_policy": "default_fixed",
+            "fixed_gpu_index": str(FIXED_GPU_INDEX),
         }
         _write_job(train_job_id, job)
 
+        log_event(
+            logger,
+            "train_gt resolved",
+            ctx=ctx,
+            train_job_id=train_job_id,
+            dataset_root=str(dataset_root),
+            split_train=split_train,
+            split_val=split_val,
+            init_weight=str(init_weight),
+            data_yaml=str(data_yaml),
+            save_path=str(save_path),
+            version=version_tag,
+            device=train_device,
+            device_policy="default_fixed",
+        )
+
         model = YOLO(str(init_weight))
 
+        extra = req.train.extra or {}
         train_kwargs: Dict[str, Any] = dict(
             data=str(data_yaml),
             epochs=int(req.train.epochs),
             imgsz=int(req.train.imgsz),
             batch=int(req.train.batch),
-            workers=int(req.train.extra.get("workers", 8)),
-            seed=int(req.train.extra.get("seed", 42)),
-            amp=bool(req.train.extra.get("amp", True)),
-            device=str(req.train.device or DEFAULT_DEVICE),
+            workers=int(extra.get("workers", 8)),
+            seed=int(extra.get("seed", 42)),
+            amp=bool(extra.get("amp", True)),
+            device=train_device,  # ✅ GPU1 고정 주입
             verbose=False,
         )
 
-        lr0 = req.train.extra.get("lr0") or req.train.extra.get("lr")
+        lr0 = extra.get("lr0") or extra.get("lr")
         if lr0 is not None:
             train_kwargs["lr0"] = float(lr0)
-        wd = req.train.extra.get("weight_decay")
+        wd = extra.get("weight_decay")
         if wd is not None:
             train_kwargs["weight_decay"] = float(wd)
 
@@ -543,7 +610,11 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             "last_pt": str(last_pt) if last_pt.exists() else None,
             "init_weight": str(init_weight),
             "data_yaml": str(data_yaml),
+            "dataset_root": str(dataset_root),
             "trainer_save_dir": str(trainer_save_dir),
+            "device": train_device,
+            "device_policy": "default_fixed",
+            "fixed_gpu_index": str(FIXED_GPU_INDEX),
         }
 
         job = _read_job(train_job_id)
@@ -559,6 +630,8 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             train_job_id=train_job_id,
             trained_weight=str(save_path),
             version=version_tag,
+            device=train_device,
+            device_policy="default_fixed",
         )
 
     except Exception as e:
@@ -575,27 +648,19 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         )
 
 
-# -----------------------------
-# HTTP endpoints: Train
-# -----------------------------
 @app.post("/train/gt", response_model=GTTrainResponse)
 def train_gt(req: GTTrainRequest, background: BackgroundTasks):
-    """
-    정책 준수:
-    - 모델 mismatch 차단
-    - init: v2~면 직전 프로젝트 weight, 없으면 base_bdd100k
-    - 저장: /weights/projects/{user}/{project}/{model}/v###/best.pt
-    """
     if req.model != MODEL_NAME:
         raise HTTPException(status_code=400, detail=f"model mismatch: got {req.model}, expected {MODEL_NAME}")
 
     if not req.identity.job_id:
         raise HTTPException(status_code=400, detail="identity.job_id is required")
 
-    if not req.dataset.img_root:
-        raise HTTPException(status_code=400, detail="dataset.img_root is required")
-    if not req.dataset.train:
-        raise HTTPException(status_code=400, detail="dataset.train is required")
+    if req.dataset is not None:
+        if not req.dataset.img_root:
+            raise HTTPException(status_code=400, detail="dataset.img_root is required when dataset is provided")
+        if not req.dataset.train:
+            raise HTTPException(status_code=400, detail="dataset.train is required when dataset is provided")
 
     train_job_id = f"{MODEL_NAME}_{uuid.uuid4().hex[:10]}"
 
@@ -606,11 +671,20 @@ def train_gt(req: GTTrainRequest, background: BackgroundTasks):
         "status": "QUEUED",
         "request": req.model_dump(),
         "created_at": time.time(),
+        "device_policy": "default_fixed",
+        "fixed_gpu_index": str(FIXED_GPU_INDEX),
     }
     _write_job(train_job_id, record)
 
     ctx = LogContext(job_id=req.identity.job_id, run_id=req.identity.run_id, stage="train_gt", model=str(MODEL_NAME))
-    log_event(logger, "train_gt queued", ctx=ctx, train_job_id=train_job_id)
+    log_event(
+        logger,
+        "train_gt queued",
+        ctx=ctx,
+        train_job_id=train_job_id,
+        device_policy="default_fixed",
+        fixed_gpu_index=str(FIXED_GPU_INDEX),
+    )
 
     background.add_task(_do_train, train_job_id, req)
 
@@ -625,10 +699,6 @@ def train_gt(req: GTTrainRequest, background: BackgroundTasks):
 
 @app.get("/train/status/{train_job_id}")
 def train_status(train_job_id: str):
-    """
-    폴링용 상태 조회
-    - DONE이면 artifacts.trained_weight에 정책 파일명 weight가 들어있음
-    """
     ctx = LogContext(stage="train_gt_status", model=str(MODEL_NAME))
 
     try:

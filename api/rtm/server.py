@@ -1,37 +1,82 @@
+# api/rtm/server.py
 from __future__ import annotations
 
 import json
 import os
 import time
-import uuid
 import traceback
+import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Iterable
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-from fastapi import FastAPI, BackgroundTasks, HTTPException
-
-from src.common.utils.logging import setup_logger, LogContext, log_event
+from fastapi import BackgroundTasks, FastAPI, HTTPException
 
 from src.common.dto.dto import (
-    InferBatchRequest,
-    ModelName,
     Detection,
-    InferItemResult,
-    ModelPredResponse,
     GTTrainRequest,
     GTTrainResponse,
+    InferBatchRequest,
+    InferItemResult,
+    ModelName,
+    ModelPredResponse,
 )
+from src.common.utils.logging import LogContext, log_event, setup_logger
 
 MODEL_NAME: ModelName = "rtm"
 
+# =============================================================================
+# ✅ CODE-LEVEL GPU PINNING (docker-compose 안 먹을 때 최후의 보루)
+#   - torch/mmengine/mmdet 등 CUDA를 만질 수 있는 모듈 import 전에 실행돼야 함.
+#   - 컨테이너에 GPU가 여러 개 노출돼도, 이 프로세스는 "0번만 보이게" 강제한다.
+# =============================================================================
+os.environ.setdefault("CUDA_DEVICE_ORDER", "PCI_BUS_ID")
+os.environ["CUDA_VISIBLE_DEVICES"] = os.getenv("CUDA_VISIBLE_DEVICES", "0").strip() or "0"
+
+# 컨테이너 내부 torch 기준 device는 항상 cuda:0 (보이는 GPU가 1개뿐이므로)
+FIXED_GPU_INDEX = "0"
+FIXED_DEVICE = "cuda:0"
+
+
+def _fixed_device() -> str:
+    return str(FIXED_DEVICE)
+
+
+# =============================================================================
+# ✅ OVERRIDE POLICY (요청이 device를 보내도 에러내지 말고 "무시")
+#   - 프론트/게이트웨이가 device를 고정으로 보내는 경우(예: "0")가 있어서 400이 나면 불편함
+#   - 대신 로그로만 남기고, 실제 실행 device는 항상 FIXED_DEVICE를 사용한다.
+# =============================================================================
+def _ignore_device_override(params: Any) -> Optional[str]:
+    """infer 요청 params.device가 들어오면 기록만 하고 무시"""
+    if not isinstance(params, dict):
+        return None
+    dv = params.get("device")
+    if dv is None:
+        return None
+    return str(dv)
+
+
+def _ignore_train_device_override(req: GTTrainRequest) -> Optional[str]:
+    """train 요청 train.device가 들어오면 기록만 하고 무시"""
+    if getattr(req, "train", None) is None:
+        return None
+    dv = getattr(req.train, "device", None)
+    if dv in (None, "", "null"):
+        return None
+    return str(dv)
+
+
+# ✅ GT roots (v2: gt_version 지원)
+GT_CURRENT_ROOT = Path(os.getenv("GT_CURRENT_ROOT", "/workspace/storage/GT/current")).resolve()
+GT_VERSIONS_ROOT = Path(os.getenv("GT_VERSIONS_ROOT", "/workspace/storage/GT_versions")).resolve()
+
 DEFAULT_REGISTRY_ROOT = os.getenv("MODEL_REGISTRY_ROOT", "/workspace/logs/model_train")
-REGISTRY_DIR = Path(DEFAULT_REGISTRY_ROOT) / str(MODEL_NAME)
+REGISTRY_DIR = (Path(DEFAULT_REGISTRY_ROOT) / str(MODEL_NAME)).resolve()
 REGISTRY_DIR.mkdir(parents=True, exist_ok=True)
 
-WEIGHTS_ROOT = Path(os.getenv("WEIGHTS_ROOT", "/weights"))
+WEIGHTS_ROOT = Path(os.getenv("WEIGHTS_ROOT", "/weights")).resolve()
 WEIGHTS_ROOT.mkdir(parents=True, exist_ok=True)
 
-DEFAULT_DEVICE = os.getenv("DEVICE", "cuda:0")
 DEFAULT_IMGSZ = int(os.getenv("DEFAULT_IMGSZ", "640"))
 DEFAULT_CONF = float(os.getenv("DEFAULT_CONF", "0.25"))
 
@@ -43,17 +88,22 @@ logger = setup_logger(
     level=os.getenv("LOG_LEVEL", "INFO"),
 )
 
+# =============================================================================
+# ✅ IMPORTANT
+#   - 여기서 src.rtm.infer / train_gt import 될 때 내부에서 torch/cuda init 될 수 있음.
+#   - 위에서 CUDA_VISIBLE_DEVICES를 먼저 박았기 때문에 torch는 GPU "0만 존재"한다고 인식.
+# =============================================================================
 try:
     from src.rtm.infer import infer_batch as _infer_batch
-except Exception:
+except Exception:  # pragma: no cover
     _infer_batch = None
 
 try:
     from src.rtm.train_gt import train_gt as _train_gt
-except Exception:
+except Exception:  # pragma: no cover
     _train_gt = None
 
-app = FastAPI(title=f"{MODEL_NAME}-api", version="0.4.1")
+app = FastAPI(title=f"{MODEL_NAME}-api", version="0.4.4")
 
 log_event(
     logger,
@@ -61,7 +111,12 @@ log_event(
     ctx=LogContext(model=str(MODEL_NAME), stage="boot"),
     registry_dir=str(REGISTRY_DIR),
     weights_root=str(WEIGHTS_ROOT),
-    device=DEFAULT_DEVICE,
+    gt_current_root=str(GT_CURRENT_ROOT),
+    gt_versions_root=str(GT_VERSIONS_ROOT),
+    device_policy="fixed",
+    fixed_gpu_index=str(FIXED_GPU_INDEX),
+    fixed_device=str(FIXED_DEVICE),
+    cuda_visible_devices=str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
     default_imgsz=DEFAULT_IMGSZ,
     default_conf=DEFAULT_CONF,
     rtm_config=(RTM_CONFIG or None),
@@ -69,6 +124,10 @@ log_event(
     train_runner_available=(_train_gt is not None),
 )
 
+
+# -----------------------------
+# Registry helpers
+# -----------------------------
 def _job_path(train_job_id: str) -> Path:
     return REGISTRY_DIR / f"train_{train_job_id}.json"
 
@@ -86,6 +145,10 @@ def _read_job(train_job_id: str) -> Dict[str, Any]:
         raise FileNotFoundError(str(p))
     return json.loads(p.read_text(encoding="utf-8"))
 
+
+# -----------------------------
+# Weights helpers
+# -----------------------------
 def _project_model_dir(user_key: str, project_id: str) -> Path:
     return (WEIGHTS_ROOT / "projects" / str(user_key) / str(project_id) / str(MODEL_NAME)).resolve()
 
@@ -108,7 +171,7 @@ def _pick_latest_ckpt(weights_dir: Path, exts: Tuple[str, ...] = ("pth", "pt", "
 
 
 def _list_version_dirs(base: Path) -> List[Path]:
-    """v### 폴더만 추출 후 번호 순 정렬"""
+    """v### 폴더만 추출 후 번호 순 정렬(내림차순)"""
     if not base.exists():
         return []
     vers: List[Tuple[int, Path]] = []
@@ -123,7 +186,6 @@ def _pick_best_or_latest_in_dir(d: Path, exts: Tuple[str, ...]) -> Optional[Path
     if not d.exists():
         return None
 
-    # best 우선
     best_cands: List[Path] = []
     for ext in exts:
         best_cands += list(d.rglob(f"best*.{ext}"))
@@ -153,7 +215,6 @@ def _next_project_version(user_key: str, project_id: str) -> int:
     vdirs = _list_version_dirs(base)
     if not vdirs:
         return 1
-    # _list_version_dirs는 내림차순이므로 첫 번째가 max
     max_v = int(vdirs[0].name[1:])
     return max_v + 1
 
@@ -191,6 +252,11 @@ def _resolve_init_for_train(req: GTTrainRequest) -> Path:
         return prev
 
     return _base_bdd100k_weight()
+
+
+# -----------------------------
+# Inference helpers
+# -----------------------------
 def _empty_results(req: InferBatchRequest) -> List[InferItemResult]:
     return [InferItemResult(image_id=it.image_id, detections=[]) for it in (req.items or [])]
 
@@ -262,7 +328,6 @@ def _extract_weight_used(out: Dict[str, Any]) -> Optional[str]:
         return str(v)
     if v is not None:
         return str(v)
-
     mv = _extract_meta_str(out, "weight_used")
     return str(mv) if mv else None
 
@@ -277,7 +342,6 @@ def _coerce_infer_output(
 
     ok = bool(out.get("ok", True))
     batch_id = str(out.get("batch_id", req.batch_id))
-
     weight_used = _extract_weight_used(out)
 
     error = out.get("error")
@@ -324,17 +388,101 @@ def _coerce_infer_output(
 
     return fixed_results, weight_used, ok, error, batch_id, weight_dir_used
 
+
+# -----------------------------
+# GT helpers (v2: gt_version)
+# -----------------------------
+def _select_gt_root(req: GTTrainRequest) -> Path:
+    """
+    ✅ GT 루트 결정
+    우선순위:
+      1) req.gt.gt_version 있으면 GT_VERSIONS_ROOT/<gt_version>
+      2) req.dataset.img_root 기반 (images로 들어오면 parent 보정)
+      3) fallback: GT_CURRENT_ROOT
+    """
+    if getattr(req, "gt", None) is not None and getattr(req.gt, "gt_version", None):
+        return (GT_VERSIONS_ROOT / req.gt.gt_version).resolve()
+
+    if req.dataset is not None and req.dataset.img_root:
+        img_root = Path(req.dataset.img_root).resolve()
+
+        if (
+            (img_root / "images").exists()
+            or (img_root / "labels").exists()
+            or (img_root / "annotation").exists()
+            or (img_root / "annotations").exists()
+        ):
+            return img_root
+
+        parent = img_root.parent
+        if (
+            (parent / "images").exists()
+            or (parent / "labels").exists()
+            or (parent / "annotation").exists()
+            or (parent / "annotations").exists()
+        ):
+            return parent
+
+        return img_root
+
+    return GT_CURRENT_ROOT
+
+
+def _resolve_rtm_ann_paths(gt_root: Path) -> Tuple[Path, Path, Path]:
+    """
+    ✅ RTM annotation 위치 자동 탐색
+    """
+    for dname in ("annotation", "annotations"):
+        ann_dir = gt_root / dname
+        tr = ann_dir / "train.json"
+        va = ann_dir / "val.json"
+        if tr.exists() and va.exists():
+            return ann_dir, tr, va
+
+    ann_dir = gt_root / "rtm" / "annotations"
+    tr = ann_dir / "instances_train.json"
+    va = ann_dir / "instances_val.json"
+    if tr.exists() and va.exists():
+        return ann_dir, tr, va
+
+    raise FileNotFoundError(
+        "RTM annotation not found. Expected one of:\n"
+        f"  - {gt_root}/annotation/train.json + val.json\n"
+        f"  - {gt_root}/annotations/train.json + val.json\n"
+        f"  - {gt_root}/rtm/annotations/instances_train.json + instances_val.json"
+    )
+
+
+# -----------------------------
+# HTTP endpoints
+# -----------------------------
 @app.get("/health")
 def health():
-    return {"ok": True, "model": str(MODEL_NAME)}
+    return {
+        "ok": True,
+        "model": str(MODEL_NAME),
+        "device_policy": "fixed",
+        "fixed_gpu_index": "0",
+        "fixed_device": "cuda:0",
+        "cuda_visible_devices": str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
+    }
 
 
 @app.post("/infer")
 def infer(req: InferBatchRequest) -> Dict[str, Any]:
     t0 = time.time()
+
     params = req.params or {}
+    requested_device = _ignore_device_override(params)  # ✅ 기록만
+
     run_id = params.get("run_id")
     weight_dir = params.get("weight_dir")
+
+    # ✅ 실제 실행은 고정 device
+    device = _fixed_device()
+    conf = float(params.get("conf", DEFAULT_CONF))
+    imgsz = int(params.get("imgsz", DEFAULT_IMGSZ))
+
     ctx = LogContext(run_id=str(run_id) if run_id else None, stage="infer", model=str(MODEL_NAME))
 
     log_event(
@@ -346,6 +494,13 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
         runner_available=(_infer_batch is not None),
         rtm_config=(RTM_CONFIG or None),
         weight_dir=str(weight_dir) if weight_dir else None,
+        device=device,
+        requested_device=requested_device,  # ✅ 들어온 값은 기록
+        device_policy="fixed",
+        fixed_gpu_index=str(FIXED_GPU_INDEX),
+        conf=conf,
+        imgsz=imgsz,
+        cuda_visible_devices=str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
     )
 
     if _infer_batch is None:
@@ -366,16 +521,38 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             elapsed_ms=elapsed_ms,
             weight_used=None,
             results=_empty_results(req),
-            raw={"meta": {"weight_dir_used": str(weight_dir) if weight_dir else None}},
+            raw={
+                "meta": {
+                    "weight_dir_used": str(weight_dir) if weight_dir else None,
+                    "device": device,
+                    "requested_device": requested_device,
+                }
+            },
         )
         return resp.model_dump()
 
     try:
+        # ✅ runner가 params['device']를 참조할 수 있도록 "고정값" 주입
+        req2 = req
         try:
-            raw_out = _infer_batch(req)  # type: ignore[misc]
+            p2 = dict(req.params or {})
+            p2["device"] = device
+            p2.setdefault("conf", conf)
+            p2.setdefault("imgsz", imgsz)
+            req2 = req.model_copy(update={"params": p2})
+        except Exception:
+            req2 = req
+
+        try:
+            raw_out = _infer_batch(req2)  # type: ignore[misc]
         except TypeError:
-            # legacy runner는 dict를 받을 수 있음
-            raw_out = _infer_batch(req.model_dump(by_alias=True))  # type: ignore[misc]
+            payload = req2.model_dump(by_alias=True)
+            payload.setdefault("params", {})
+            if isinstance(payload["params"], dict):
+                payload["params"]["device"] = device
+                payload["params"].setdefault("conf", conf)
+                payload["params"].setdefault("imgsz", imgsz)
+            raw_out = _infer_batch(payload)  # type: ignore[misc]
 
         elapsed_ms = int((time.time() - t0) * 1000)
         results, weight_used, ok, error, batch_id, weight_dir_used = _coerce_infer_output(
@@ -392,6 +569,9 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             weight_used=weight_used,
             weight_dir_used=weight_dir_used,
             n_results=len(results),
+            device=device,
+            requested_device=requested_device,
+            device_policy="fixed",
         )
 
         resp = ModelPredResponse(
@@ -406,6 +586,10 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
                 "meta": {
                     "weight_dir_used": weight_dir_used,
                     "weight_used": weight_used,
+                    "device_policy": "fixed",
+                    "device": device,
+                    "requested_device": requested_device,
+                    "cuda_visible_devices": str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
                 },
                 "runner": "src.rtm.infer.infer_batch",
             },
@@ -422,6 +606,9 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
                 "elapsed_ms": elapsed_ms,
                 "error": f"{type(e).__name__}: {e}",
                 "weight_dir": str(weight_dir) if weight_dir else None,
+                "device": device,
+                "requested_device": requested_device,
+                "device_policy": "fixed",
             },
         )
         resp = ModelPredResponse(
@@ -432,9 +619,20 @@ def infer(req: InferBatchRequest) -> Dict[str, Any]:
             elapsed_ms=elapsed_ms,
             weight_used=None,
             results=_empty_results(req),
-            raw={"meta": {"weight_dir_used": str(weight_dir) if weight_dir else None}},
+            raw={
+                "meta": {
+                    "weight_dir_used": str(weight_dir) if weight_dir else None,
+                    "device": device,
+                    "requested_device": requested_device,
+                }
+            },
         )
         return resp.model_dump()
+
+
+# -----------------------------
+# Core: Train (v2 gt_version 지원) (FIXED DEVICE)
+# -----------------------------
 def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
     ident = req.identity
     ctx = LogContext(job_id=ident.job_id, run_id=ident.run_id, stage="train_gt", model=str(MODEL_NAME))
@@ -444,38 +642,41 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
     job["started_at"] = time.time()
     _write_job(train_job_id, job)
 
+    requested_train_device = _ignore_train_device_override(req)  # ✅ 기록만
+
+    log_event(
+        logger,
+        "train_gt start",
+        ctx=ctx,
+        train_job_id=train_job_id,
+        user_key=ident.user_key,
+        project_id=ident.project_id,
+        gt=getattr(req, "gt", None).model_dump() if getattr(req, "gt", None) else None,
+        dataset=req.dataset.model_dump() if req.dataset else None,
+        train=req.train.model_dump(),
+        device_policy="fixed",
+        fixed_gpu_index=str(FIXED_GPU_INDEX),
+        fixed_device=str(FIXED_DEVICE),
+        requested_train_device=requested_train_device,
+        cuda_visible_devices=str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
+    )
+
     try:
         if not ident.job_id:
             raise ValueError("identity.job_id is required")
 
-        # RTM config 필수
         cfg = (req.train.extra or {}).get("config") or RTM_CONFIG
         if not cfg:
             raise ValueError("RTM config is required. Set env RTM_CONFIG or provide train.extra['config'].")
 
         if _train_gt is None:
             raise RuntimeError("RTM train runner not available (import src.rtm.train_gt.train_gt failed)")
-        gt_root = Path(req.dataset.img_root).resolve()
+
+        gt_root = _select_gt_root(req)
         if not gt_root.exists():
-            raise FileNotFoundError(f"dataset.img_root not found: {gt_root}")
+            raise FileNotFoundError(f"resolved gt_root not found: {gt_root}")
 
-        ann_dir = gt_root / "annotation"
-        if not ann_dir.exists():
-            ann_dir_alt = gt_root / "annotations"
-            if ann_dir_alt.exists():
-                ann_dir = ann_dir_alt
-
-        if not ann_dir.exists():
-            raise FileNotFoundError(f"RTM annotation dir not found: {ann_dir}")
-
-        train_path = ann_dir / "train.json"
-        val_path = ann_dir / "val.json"
-
-        if not train_path.exists():
-            raise FileNotFoundError(f"RTM train annotation not found: {train_path}")
-        if not val_path.exists():
-            raise FileNotFoundError(f"RTM val annotation not found: {val_path}")
-
+        ann_dir, train_path, val_path = _resolve_rtm_ann_paths(gt_root)
         init_weight = _resolve_init_for_train(req)
 
         user_key = str(ident.user_key)
@@ -484,6 +685,8 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         version_tag = f"v{next_v:03d}"
         out_dir = _project_model_dir(user_key, project_id) / version_tag
         save_path = out_dir / "best.pth"
+
+        train_device = _fixed_device()  # ✅ ALWAYS cuda:0
 
         resolved = {
             "config": str(cfg),
@@ -494,6 +697,11 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             "dataset_train": str(train_path),
             "dataset_val": str(val_path),
             "annotation_dir": str(ann_dir),
+            "device_policy": "fixed",
+            "fixed_gpu_index": str(FIXED_GPU_INDEX),
+            "device": train_device,
+            "requested_train_device": requested_train_device,
+            "cuda_visible_devices": str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
         }
         job = _read_job(train_job_id)
         job["resolved"] = resolved
@@ -507,9 +715,8 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             "img_root": str(gt_root),
             "train": str(train_path),
             "val": str(val_path),
+            "annotation_dir": str(ann_dir),
         }
-        # 선택: runner가 annotation_dir을 직접 쓰는 경우 대비
-        extra["_dataset"]["annotation_dir"] = str(ann_dir)
 
         artifacts = _train_gt(
             config=str(cfg),
@@ -518,7 +725,7 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             out_ckpt=str(save_path),
             epochs=int(req.train.epochs),
             imgsz=int(req.train.imgsz),
-            device=str(req.train.device or DEFAULT_DEVICE),
+            device=train_device,  # ✅ FIXED
             extra=extra,
         )
 
@@ -533,6 +740,12 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             "version": version_tag,
             "init_weight": str(init_weight),
             "gt_root": str(gt_root),
+            "annotation_dir": str(ann_dir),
+            "device_policy": "fixed",
+            "fixed_gpu_index": str(FIXED_GPU_INDEX),
+            "device": train_device,
+            "requested_train_device": requested_train_device,
+            "cuda_visible_devices": str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
             "runner_artifacts": artifacts if isinstance(artifacts, dict) else {"note": "runner returned non-dict"},
         }
         _write_job(train_job_id, job)
@@ -544,6 +757,9 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
             train_job_id=train_job_id,
             trained_weight=str(save_path),
             version=version_tag,
+            device=train_device,
+            requested_train_device=requested_train_device,
+            device_policy="fixed",
         )
 
     except Exception as e:
@@ -560,7 +776,6 @@ def _do_train(train_job_id: str, req: GTTrainRequest) -> None:
         )
 
 
-
 @app.post("/train/gt", response_model=GTTrainResponse)
 def train_gt(req: GTTrainRequest, background: BackgroundTasks):
     if req.model != MODEL_NAME:
@@ -569,10 +784,12 @@ def train_gt(req: GTTrainRequest, background: BackgroundTasks):
     if not req.identity.job_id:
         raise HTTPException(status_code=400, detail="identity.job_id is required")
 
-    if not req.dataset.img_root:
-        raise HTTPException(status_code=400, detail="dataset.img_root is required")
+    # ✅ 여기서도 그냥 기록만 (에러 X)
+    requested_train_device = _ignore_train_device_override(req)
 
-    # TODO: later - dataset.format으로 분기 (yolo면 train 필수, coco면 ann_file 필수)
+    if req.dataset is not None:
+        if not req.dataset.img_root:
+            raise HTTPException(status_code=400, detail="dataset.img_root is required when dataset is provided")
 
     train_job_id = f"{MODEL_NAME}_{uuid.uuid4().hex[:10]}"
 
@@ -583,11 +800,26 @@ def train_gt(req: GTTrainRequest, background: BackgroundTasks):
         "status": "QUEUED",
         "request": req.model_dump(),
         "created_at": time.time(),
+        "device_policy": "fixed",
+        "fixed_gpu_index": "0",
+        "fixed_device": "cuda:0",
+        "requested_train_device": requested_train_device,
+        "cuda_visible_devices": str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
     }
     _write_job(train_job_id, record)
 
     ctx = LogContext(job_id=req.identity.job_id, run_id=req.identity.run_id, stage="train_gt", model=str(MODEL_NAME))
-    log_event(logger, "train_gt queued", ctx=ctx, train_job_id=train_job_id)
+    log_event(
+        logger,
+        "train_gt queued",
+        ctx=ctx,
+        train_job_id=train_job_id,
+        device_policy="fixed",
+        fixed_gpu_index="0",
+        fixed_device="cuda:0",
+        requested_train_device=requested_train_device,
+        cuda_visible_devices=str(os.environ.get("CUDA_VISIBLE_DEVICES", "")),
+    )
 
     background.add_task(_do_train, train_job_id, req)
 
